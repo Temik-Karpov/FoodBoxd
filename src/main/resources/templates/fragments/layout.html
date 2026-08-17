@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:fragment="layout(title, content)">
+<head>
+    <meta charset="UTF-8">
+    <title th:replace="${title} ?: 'Foodboxd'">Foodboxd</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+<nav>
+    <a th:href="@{/}" class="logo">Foodboxd</a>
+
+    <div class="nav-spacer"></div>
+
+    <!-- Выпадающее меню пользователя (для авторизованных) -->
+    <div sec:authorize="isAuthenticated()" class="user-dropdown">
+        <button class="user-dropdown-btn" onclick="this.parentElement.classList.toggle('open')">
+            <img th:src="${currentUserAvatar}" alt="Аватар" class="nav-avatar">
+        </button>
+        <div class="user-dropdown-menu">
+            <a th:href="@{/profile/{email}(email=${#authentication.name})}">
+                <i class="fas fa-user"></i> Профиль
+            </a>
+            <hr>
+            <form th:action="@{/logout}" method="post">
+                <button type="submit">
+                    <i class="fas fa-sign-out-alt"></i> Выйти
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Кнопки для неавторизованных -->
+    <div sec:authorize="!isAuthenticated()" class="nav-auth-buttons">
+        <a th:href="@{/login}" class="btn btn-sm">Войти</a>
+        <a th:href="@{/register}" class="btn btn-sm btn-secondary">Регистрация</a>
+    </div>
+</nav>
+
+<div class="container">
+    <th:block th:replace="${content}"></th:block>
+</div>
+
+<script>
+    document.addEventListener('click', function(e) {
+        document.querySelectorAll('.user-dropdown.open').forEach(dropdown => {
+            if (!dropdown.contains(e.target)) {
+                dropdown.classList.remove('open');
+            }
+        });
+    });
+</script>
+</body>
+</html>

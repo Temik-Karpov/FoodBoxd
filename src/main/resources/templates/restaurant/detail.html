@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html th:replace="~{fragments/layout :: layout(~{::title}, ~{::.container})}" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <title th:text="${restaurant.name}">Ресторан</title>
+    <script src="https://api-maps.yandex.ru/2.1/?apikey=ВАШ_API_КЛЮЧ&lang=ru_RU" type="text/javascript"></script>
+</head>
+<body>
+<div class="container" th:fragment="content">
+    <!-- Админские кнопки -->
+    <div sec:authorize="hasRole('ADMIN')" class="admin-bar">
+        <a th:href="@{'/restaurants/' + ${restaurant.id} + '/edit'}" class="btn btn-sm">Редактировать</a>
+        <form th:action="@{'/restaurants/' + ${restaurant.id} + '/deactivate'}" method="post" style="display:inline;">
+            <button type="submit" class="btn btn-sm btn-secondary"
+                    onclick="return confirm('Деактивировать ресторан?')">Деактивировать</button>
+        </form>
+        <a th:href="@{'/admin/restaurants/' + ${restaurant.id} + '/menu/create'}" class="btn btn-sm">Добавить блюдо</a>
+    </div>
+
+    <div class="restaurant-hero">
+        <div class="restaurant-hero-img">
+            <img th:src="${!photos.isEmpty() ? photos[0].url : '/images/default-restaurant.png'}" alt="Фото заведения">
+        </div>
+        <div class="restaurant-hero-info card">
+            <h1 th:text="${restaurant.name}"></h1>
+            <p class="restaurant-hero-address">
+                <i class="fas fa-map-marker-alt"></i>
+                <span th:text="${restaurant.address}"></span>
+            </p>
+            <div class="restaurant-hero-rating" th:if="${restaurant.averageRating != null}">
+                <span class="rating-stars-display">
+                    ★ <span th:text="${#numbers.formatDecimal(restaurant.averageRating, 1, 1)}"></span>
+                </span>
+            </div>
+            <p class="restaurant-hero-desc" th:if="${restaurant.description}" th:text="${restaurant.description}"></p>
+        </div>
+    </div>
+
+    <!-- Карта Яндекс
+    <div class="card" th:if="${restaurant.address != null && !restaurant.address.isEmpty()}">
+        <h3>На карте</h3>
+        <div id="yandex-map" style="width:100%;height:300px;border-radius:12px;"
+             th:attr="data-address=${restaurant.address}, data-name=${restaurant.name}"></div>
+    </div>-->
+
+    <!-- Галерея фотографий -->
+    <div class="card">
+        <h3>Фотографии</h3>
+        <div class="photo-gallery" th:if="${!photos.isEmpty()}">
+            <div th:each="photo : ${photos}" class="photo-wrapper">
+                <img th:src="${photo.url}" alt="Фото заведения" class="gallery-img">
+                <form sec:authorize="hasRole('ADMIN')"
+                      th:action="@{'/restaurants/' + ${restaurant.id} + '/photos/' + ${photo.id} + '/delete'}"
+                      method="post" class="photo-delete-form">
+                    <button type="submit" class="photo-delete-btn"
+                            onclick="return confirm('Удалить фото?')">✕</button>
+                </form>
+            </div>
+        </div>
+        <p th:if="${photos.isEmpty()}" class="empty-state">Фотографий пока нет.</p>
+        <!-- Загрузка фото (админ) -->
+        <div sec:authorize="hasRole('ADMIN')" class="photo-upload">
+            <form th:action="@{'/restaurants/' + ${restaurant.id} + '/photos/upload'}"
+                  method="post" enctype="multipart/form-data" class="inline-upload">
+                <input type="file" name="photo" accept="image/*" required>
+                <button type="submit" class="btn btn-sm">Загрузить фото</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Оценка ресторана -->
+    <div sec:authorize="isAuthenticated()" class="card rating-block"
+         th:attr="data-item-type='RESTAURANT', data-item-id=${restaurant.id}">
+        <h3>Оценить заведение</h3>
+        <div class="star-rating">
+            <span class="star" data-value="1"></span>
+            <span class="star" data-value="2"></span>
+            <span class="star" data-value="3"></span>
+            <span class="star" data-value="4"></span>
+            <span class="star" data-value="5"></span>
+        </div>
+        <input type="hidden" class="rating-score-input"
+               th:value="${userRating?.score != null ? userRating.score : 0}">
+        <textarea class="rating-review-input" placeholder="Оставьте комментарий (необязательно)..."
+                  rows="2" th:text="${userRating?.review}"></textarea>
+        <div class="rating-info">
+            <span>Средняя: <span class="avg-rating-value rating-value"
+                                 th:text="${restaurant.averageRating != null ? #numbers.formatDecimal(restaurant.averageRating, 1, 1) : '-'}">-</span></span>
+        </div>
+    </div>
+
+    <!-- Меню -->
+    <h2>Меню</h2>
+    <div class="menu-grid" th:if="${!menuItems.isEmpty()}">
+        <div th:each="item : ${menuItems}" class="menu-card-wrapper">
+            <a th:href="@{'/menu-item/' + ${item.id}}" class="menu-card card">
+                <div class="menu-card-img">
+                    <img th:src="${item.imageUrl != null ? item.imageUrl : '/images/default-dish.png'}" alt="Фото блюда">
+                </div>
+                <div class="menu-card-body">
+                    <h3 th:text="${item.name}"></h3>
+                    <p class="menu-card-desc" th:if="${item.description}" th:text="${item.description}"></p>
+                    <div class="menu-card-meta">
+                        <span class="menu-card-price" th:text="${item.price} + ' ₽'"></span>
+                        <span th:if="${item.weightGrams != null}" th:text="${item.weightGrams} + ' г'"></span>
+                        <span th:if="${item.alcoholPercentage != null}" class="alcohol-badge"
+                              th:text="${item.alcoholPercentage} + '%'"></span>
+                    </div>
+                    <span class="menu-card-rating" th:if="${item.averageRating != null}">
+                        ★ <span th:text="${#numbers.formatDecimal(item.averageRating, 1, 1)}"></span>
+                    </span>
+                </div>
+            </a>
+            <!-- Админские кнопки для блюда -->
+            <div sec:authorize="hasRole('ADMIN')" class="menu-item-admin-actions">
+                <form th:action="@{'/menu-item/' + ${item.id} + '/hide'}" method="post">
+                    <button type="submit" class="btn btn-sm btn-secondary"
+                            onclick="return confirm('Скрыть блюдо?')">Скрыть</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <p th:if="${menuItems.isEmpty()}" class="empty-state">Меню пока не добавлено.</p>
+
+    <!-- Комментарии -->
+    <div class="card" th:if="${reviews != null}">
+        <div th:replace="~{fragments/reviews :: reviews(${reviews}, ${reviewCount}, 'RESTAURANT', ${restaurant.id})}"></div>
+    </div>
+
+    <script th:src="@{/js/rating.js}"></script>
+    <script th:src="@{/js/yandex-map.js}"></script>
+</div>
+</body>
+</html>

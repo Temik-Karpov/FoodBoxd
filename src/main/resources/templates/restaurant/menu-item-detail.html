@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html th:replace="~{fragments/layout :: layout(~{::title}, ~{::.container})}" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <title th:text="${item.name}">Блюдо</title>
+</head>
+<body>
+<div class="container" th:fragment="content">
+    <!-- Админские кнопки -->
+    <div sec:authorize="hasRole('ADMIN')" class="admin-bar">
+        <form th:action="@{'/menu-item/' + ${item.id} + '/hide'}" method="post" style="display:inline;">
+            <button type="submit" class="btn btn-sm btn-secondary"
+                    onclick="return confirm('Скрыть блюдо?')">Скрыть блюдо</button>
+        </form>
+    </div>
+
+    <div class="breadcrumbs">
+        <a th:href="@{/}">Главная</a> ›
+        <a th:href="@{'/restaurants/' + ${item.restaurant.id}}" th:text="${item.restaurant.name}"></a> ›
+        <span th:text="${item.name}"></span>
+    </div>
+
+    <div class="menu-item-detail card">
+        <div class="menu-item-detail-img">
+            <img th:src="${item.imageUrl != null ? item.imageUrl : '/images/default-dish.png'}" alt="Фото блюда">
+        </div>
+        <div class="menu-item-detail-info">
+            <h1 th:text="${item.name}"></h1>
+            <p class="menu-item-detail-restaurant">
+                <i class="fas fa-utensils"></i>
+                <a th:href="@{'/restaurants/' + ${item.restaurant.id}}" th:text="${item.restaurant.name}"></a>
+            </p>
+            <p class="menu-item-detail-desc" th:if="${item.description}" th:text="${item.description}"></p>
+
+            <div class="menu-item-detail-meta">
+                <div class="meta-item">
+                    <span class="meta-label">Цена</span>
+                    <span class="meta-value" th:text="${item.price} + ' ₽'"></span>
+                </div>
+                <div class="meta-item" th:if="${item.weightGrams != null}">
+                    <span class="meta-label">Вес</span>
+                    <span class="meta-value" th:text="${item.weightGrams} + ' г'"></span>
+                </div>
+                <div class="meta-item" th:if="${item.alcoholPercentage != null}">
+                    <span class="meta-label">Крепость</span>
+                    <span class="meta-value" th:text="${item.alcoholPercentage} + '%'"></span>
+                </div>
+                <div class="meta-item" th:if="${item.averageRating != null}">
+                    <span class="meta-label">Рейтинг</span>
+                    <span class="meta-value rating-highlight">
+                        ★ <span th:text="${#numbers.formatDecimal(item.averageRating, 1, 1)}"></span>
+                    </span>
+                </div>
+            </div>
+
+            <!-- Оценка блюда -->
+            <div sec:authorize="isAuthenticated()" class="rating-block"
+                 th:attr="data-item-type='MENU_ITEM', data-item-id=${item.id}">
+                <h3>Оценить</h3>
+                <div class="star-rating">
+                    <span class="star" data-value="1"></span>
+                    <span class="star" data-value="2"></span>
+                    <span class="star" data-value="3"></span>
+                    <span class="star" data-value="4"></span>
+                    <span class="star" data-value="5"></span>
+                </div>
+                <input type="hidden" class="rating-score-input"
+                       th:value="${userRating?.score != null ? userRating.score : 0}">
+                <textarea class="rating-review-input" placeholder="Оставьте комментарий (необязательно)..."
+                          rows="2" th:text="${userRating?.review}"></textarea>
+                <div class="rating-info">
+                    <span>Средняя: <span class="avg-rating-value rating-value"
+                                         th:text="${item.averageRating != null ? #numbers.formatDecimal(item.averageRating, 1, 1) : '-'}">-</span></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Галерея фотографий -->
+    <div class="card">
+        <h3>Фотографии блюда</h3>
+        <div class="photo-gallery" th:if="${!photos.isEmpty()}">
+            <div th:each="photo : ${photos}" class="photo-wrapper">
+                <img th:src="${photo.url}" alt="Фото блюда" class="gallery-img">
+                <form sec:authorize="hasRole('ADMIN')"
+                      th:action="@{'/menu-item/' + ${item.id} + '/photos/' + ${photo.id} + '/delete'}"
+                      method="post" class="photo-delete-form">
+                    <button type="submit" class="photo-delete-btn"
+                            onclick="return confirm('Удалить фото?')">✕</button>
+                </form>
+            </div>
+        </div>
+        <p th:if="${photos.isEmpty()}" class="empty-state">Фотографий пока нет.</p>
+        <!-- Загрузка фото (админ) -->
+        <div sec:authorize="hasRole('ADMIN')" class="photo-upload">
+            <form th:action="@{'/menu-item/' + ${item.id} + '/photos/upload'}"
+                  method="post" enctype="multipart/form-data" class="inline-upload">
+                <input type="file" name="photo" accept="image/*" required>
+                <button type="submit" class="btn btn-sm">Загрузить фото</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Комментарии -->
+    <div class="card" th:if="${reviews != null}">
+        <div th:replace="~{fragments/reviews :: reviews(${reviews}, ${reviewCount}, 'MENU_ITEM', ${item.id})}"></div>
+    </div>
+
+    <script th:src="@{/js/rating.js}"></script>
+</div>
+</body>
+</html>

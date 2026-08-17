@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html th:replace="~{fragments/layout :: layout(~{::title}, ~{::.container})}">
+<head>
+    <title th:text="${restaurantId == null ? 'Новый ресторан' : 'Редактирование ресторана'}"></title>
+</head>
+<body>
+<div class="container" th:fragment="content">
+    <div class="card" style="max-width: 500px; margin: 2rem auto;">
+        <h2 th:text="${restaurantId == null ? 'Новый ресторан' : 'Редактирование'}"></h2>
+        <form th:action="@{${restaurantId == null ? '/admin/restaurants/create' : '/admin/restaurants/' + restaurantId + '/edit'}}" th:object="${restaurant}" method="post">
+            <label>Название: <input type="text" th:field="*{name}" required></label><br>
+            <label>Адрес: <input type="text" th:field="*{address}"></label><br>
+            <label>Описание: <textarea th:field="*{description}"></textarea></label><br>
+            <button type="submit" class="btn">Сохранить</button>
+        </form>
+    </div>
+</div>
+</body>
+</html>

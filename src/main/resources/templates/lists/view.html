@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html th:replace="~{fragments/layout :: layout(~{::title}, ~{::.container})}">
+<head>
+    <title th:text="${list.name}">Список</title>
+</head>
+<body>
+<div class="container" th:fragment="content">
+    <div class="list-header">
+        <h1 th:text="${list.name}"></h1>
+        <p th:if="${list.description}" th:text="${list.description}"></p>
+        <div class="list-header-meta">
+            <span class="list-badge"
+                  th:text="${list.isPublic} ? 'Публичный' : 'Приватный'"
+                  th:classappend="${list.isPublic} ? 'badge-public' : 'badge-private'"></span>
+            <span th:text="'Тип: ' + (${list.itemType == T(com.karpov.ru.foodboxd.model.enums.ItemType).RESTAURANT} ? 'Заведения' : 'Блюда и напитки')"></span>
+        </div>
+    </div>
+
+    <!-- Поиск -->
+    <div class="card search-block">
+        <h3>Добавить элемент</h3>
+        <div class="search-input-wrap">
+            <input type="text" id="search-input"
+                   th:attr="data-list-id=${list.id}"
+                   th:placeholder="${list.itemType == T(com.karpov.ru.foodboxd.model.enums.ItemType).RESTAURANT} ? 'Поиск ресторанов...' : 'Поиск блюд и напитков...'">
+            <div id="search-results" class="search-results"></div>
+        </div>
+    </div>
+
+    <!-- Список элементов -->
+    <h2>Элементы списка</h2>
+    <div th:if="${enrichedItems == null || enrichedItems.isEmpty()}" class="empty-state">
+        <p>Список пока пуст. Добавьте элементы через поиск.</p>
+    </div>
+    <div id="sortable-list" class="sortable-list"
+         th:attr="data-list-id=${list.id}"
+         th:if="${enrichedItems != null && !enrichedItems.isEmpty()}">
+        <div th:each="item, iter : ${enrichedItems}" class="card sortable-item"
+             th:attr="data-item-id=${item.get('listItemId')}">
+            <div class="drag-handle">☰</div>
+            <div class="sortable-item-body">
+                <div class="sortable-item-title">
+                    <a th:href="${item.get('link')}" th:text="${item.get('name')}"></a>
+                </div>
+                <div th:if="${item.get('restaurantName') != null}" class="sortable-item-subtitle">
+                    из <a th:href="${item.get('restaurantLink')}" th:text="${item.get('restaurantName')}"></a>
+                </div>
+            </div>
+            <div class="sortable-item-ratings">
+                <div class="sortable-rating" th:if="${item.get('userRating') != null}">
+                    <span class="rating-label">Моя</span>
+                    <span class="rating-stars">★ <span th:text="${#numbers.formatDecimal(item.get('userRating'), 1, 1)}"></span></span>
+                </div>
+                <div class="sortable-rating" th:if="${item.get('averageRating') != null}">
+                    <span class="rating-label">Средняя</span>
+                    <span class="rating-stars">★ <span th:text="${#numbers.formatDecimal(item.get('averageRating'), 1, 1)}"></span></span>
+                </div>
+            </div>
+            <button class="btn btn-sm btn-secondary remove-item-btn"
+                    th:attr="data-list-id=${list.id}, data-item-id=${item.get('listItemId')}">
+                ✕
+            </button>
+        </div>
+    </div>
+
+    <script th:src="@{/js/list-manager.js}"></script>
+</div>
+</body>
+</html>

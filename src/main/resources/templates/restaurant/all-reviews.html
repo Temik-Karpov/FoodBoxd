@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html th:replace="~{fragments/layout :: layout(~{::title}, ~{::.container})}">
+<head>
+    <title th:text="'Все комментарии - ' + ${itemName}">Все комментарии</title>
+</head>
+<body>
+<div class="container" th:fragment="content">
+    <div class="breadcrumbs">
+        <a th:href="@{/}">Главная</a> ›
+        <a th:href="${backLink}" th:text="${itemName}"></a> ›
+        <span>Все комментарии</span>
+    </div>
+
+    <h2 th:text="'Комментарии: ' + ${itemName}"></h2>
+    <div th:replace="~{fragments/reviews :: reviews(${reviews}, ${#lists.size(reviews)}, ${itemType}, ${itemId})}"></div>
+</div>
+</body>
+</html>

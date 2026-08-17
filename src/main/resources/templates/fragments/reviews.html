@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<body>
+<div th:fragment="reviews(reviews, reviewCount, itemType, itemId)">
+    <h3>Комментарии (<span th:text="${reviewCount}"></span>)</h3>
+
+    <div th:if="${reviews != null && !reviews.isEmpty()}">
+        <div th:each="review : ${reviews}" class="review-item">
+            <div class="review-header">
+                <img th:src="${review.user.avatarUrl != null ? review.user.avatarUrl : '/images/default-avatar.png'}"
+                     alt="Аватар" class="review-avatar">
+                <div class="review-meta">
+                    <strong th:text="${review.user.username}"></strong>
+                    <span class="review-score">★ <span th:text="${#numbers.formatDecimal(review.score, 1, 1)}"></span></span>
+                    <span class="review-date" th:text="${#temporals.format(review.createdAt, 'dd.MM.yyyy HH:mm')}"></span>
+                </div>
+                <!-- Кнопка удаления для админа -->
+                <form sec:authorize="hasRole('ADMIN')"
+                      th:action="@{/admin/reviews/{id}/delete(id=${review.id})}"
+                      method="post" style="display:inline;">
+                    <button type="submit" class="btn btn-sm btn-secondary"
+                            onclick="return confirm('Удалить комментарий?')">✕</button>
+                </form>
+            </div>
+            <div class="review-body" th:text="${review.review}"></div>
+        </div>
+    </div>
+    <div th:if="${reviews == null || reviews.isEmpty()}">
+        <p class="empty-state">Пока нет комментариев.</p>
+    </div>
+
+    <!-- Кнопка «Показать все» -->
+    <div th:if="${reviewCount > 5}">
+        <a th:href="@{/reviews/{itemType}/{itemId}(itemType=${itemType}, itemId=${itemId})}"
+           class="btn btn-sm btn-secondary">Показать все комментарии</a>
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html th:replace="~{fragments/layout :: layout(~{::title}, ~{::.container})}">
+<head>
+    <title>Управление ресторанами</title>
+</head>
+<body>
+<div class="container" th:fragment="content">
+    <h2>Рестораны</h2>
+    <a th:href="@{/admin/restaurants/create}" class="btn">Добавить ресторан</a>
+    <div th:each="r : ${restaurants}" class="card">
+        <h3 th:text="${r.name}"></h3>
+        <p th:text="${r.address}"></p>
+        <a th:href="@{'/admin/restaurants/' + ${r.id} + '/edit'}" class="btn">Редактировать</a>
+        <form th:action="@{'/admin/restaurants/' + ${r.id} + '/deactivate'}" method="post" style="display:inline;">
+            <button type="submit" class="btn btn-secondary">Деактивировать</button>
+        </form>
+        <a th:href="@{'/admin/restaurants/' + ${r.id} + '/menu'}" class="btn">Меню</a>
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html th:replace="~{fragments/layout :: layout(~{::title}, ~{::.container})}">
+<head>
+    <title>Новая позиция меню</title>
+</head>
+<body>
+<div class="container" th:fragment="content">
+    <div class="card" style="max-width: 500px; margin: 2rem auto;">
+        <h2>Новая позиция</h2>
+        <form th:action="@{'/admin/restaurants/' + ${restaurantId} + '/menu/create'}" th:object="${menuItem}" method="post" enctype="multipart/form-data">
+            <label>Название: <input type="text" th:field="*{name}" required></label><br>
+            <label>Описание: <textarea th:field="*{description}"></textarea></label><br>
+            <label>Цена: <input type="number" step="0.01" th:field="*{price}" required></label><br>
+            <label>Вес (г): <input type="number" th:field="*{weightGrams}"></label><br>
+            <label>Алкоголь: <input type="checkbox" th:field="*{isAlcoholic}"></label><br>
+            <label>Крепость (%): <input type="number" step="0.1" th:field="*{alcoholPercentage}"></label><br>
+            <label>Фото: <input type="file" name="photo"></label><br>
+            <button type="submit" class="btn">Сохранить</button>
+        </form>
+    </div>
+</div>
+</body>
+</html>

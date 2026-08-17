@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html th:replace="~{fragments/layout :: layout(~{::title}, ~{::.container})}">
+<head>
+    <title>Новый список</title>
+</head>
+<body>
+<div class="container" th:fragment="content">
+    <div class="card" style="max-width: 500px; margin: 2rem auto;">
+        <h2>Создать список</h2>
+        <form th:action="@{/lists/create}" method="post">
+            <div class="form-group">
+                <label for="name">Название</label>
+                <input type="text" id="name" name="name" required>
+            </div>
+            <div class="form-group">
+                <label for="description">Описание</label>
+                <textarea id="description" name="description" rows="3"></textarea>
+            </div>
+            <div class="form-group">
+                <label for="itemType">Тип списка</label>
+                <select id="itemType" name="itemType" required>
+                    <option value="RESTAURANT">Заведения (рестораны, бары)</option>
+                    <option value="MENU_ITEM">Блюда и напитки</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" name="isPublic" value="true">
+                    Публичный список
+                </label>
+            </div>
+            <button type="submit" class="btn">Создать</button>
+            <a th:href="@{/lists}" class="btn btn-secondary">Отмена</a>
+        </form>
+    </div>
+</div>
+</body>
+</html>

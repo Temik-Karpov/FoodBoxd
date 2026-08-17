@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html th:replace="~{fragments/layout :: layout(~{::title}, ~{::.container})}">
+<head>
+    <title>Главная - Foodboxd</title>
+</head>
+<body>
+<div class="container" th:fragment="content">
+    <h2>Рестораны и бары</h2>
+    <div th:if="${restaurants.isEmpty()}">
+        <p class="empty-state">Пока нет заведений.</p>
+    </div>
+    <div class="restaurant-grid" th:if="${!restaurants.isEmpty()}">
+        <a th:each="r : ${restaurants.getContent()}"
+           th:href="@{'/restaurants/' + ${r.id}}"
+           class="restaurant-card card">
+            <div class="restaurant-card-img">
+                <img th:src="@{/images/default-restaurant.png}" alt="Фото заведения">
+            </div>
+            <div class="restaurant-card-body">
+                <h3 th:text="${r.name}"></h3>
+                <p class="restaurant-card-address" th:text="${r.address}"></p>
+                <span class="restaurant-card-rating" th:if="${r.averageRating != null}">
+                    ★ <span th:text="${#numbers.formatDecimal(r.averageRating, 1, 1)}"></span>
+                </span>
+            </div>
+        </a>
+    </div>
+    <div th:if="${restaurants.totalPages > 1}" class="pagination">
+        <a th:each="i : ${#numbers.sequence(0, restaurants.totalPages - 1)}"
+           th:href="@{/(page=${i})}" th:text="${i+1}" class="btn btn-sm"
+           th:classappend="${i == restaurants.number} ? 'btn' : 'btn-secondary'"></a>
+    </div>
+</div>
+</body>
+</html>

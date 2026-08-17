@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html th:replace="~{fragments/layout :: layout(~{::title}, ~{::.container})}">
+<head>
+    <title>Редактирование профиля</title>
+</head>
+<body>
+<div class="container" th:fragment="content">
+    <div class="card" style="max-width: 500px; margin: 2rem auto;">
+        <h2>Редактирование профиля</h2>
+
+        <div th:if="${error}" class="error-message" th:text="${error}"></div>
+
+        <form th:action="@{/profile/edit}" th:object="${userProfile}" method="post" enctype="multipart/form-data">
+
+            <!-- Аватар -->
+            <div class="form-group">
+                <label>Аватар:</label>
+                <div class="avatar-preview">
+                    <img th:src="${userProfile.currentAvatarUrl != null ? userProfile.currentAvatarUrl : '/images/default-avatar.png'}"
+                         alt="Предпросмотр" class="avatar-medium">
+                </div>
+                <input type="file" name="avatarFile" accept="image/*">
+            </div>
+
+            <!-- Никнейм -->
+            <div class="form-group">
+                <label for="username">Никнейм:</label>
+                <input type="text" id="username" th:field="*{username}" required>
+                <div th:if="${#fields.hasErrors('username')}" th:errors="*{username}" class="error"></div>
+            </div>
+
+            <!-- Город -->
+            <div class="form-group">
+                <label for="city">Город:</label>
+                <input type="text" id="city" th:field="*{city}">
+            </div>
+
+            <!-- Описание -->
+            <div class="form-group">
+                <label for="bio">О себе:</label>
+                <textarea id="bio" th:field="*{bio}" rows="4" maxlength="500"></textarea>
+                <div th:if="${#fields.hasErrors('bio')}" th:errors="*{bio}" class="error"></div>
+            </div>
+
+            <button type="submit" class="btn">Сохранить</button>
+            <a th:href="@{/profile/{email}(email=${#authentication.name})}" class="btn btn-secondary">Отмена</a>
+        </form>
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html th:replace="~{fragments/layout :: layout(~{::title}, ~{::.container})}" xmlns:sec="http://www.w3.org/1999/xhtml">
+<head>
+    <title th:text="${profileUser.username} + ' - профиль'">Профиль</title>
+</head>
+<body>
+<div class="container" th:fragment="content">
+    <div class="profile-header card">
+        <img th:src="${profileUser.avatarUrl != null ? profileUser.avatarUrl : '/images/default-avatar.png'}"
+             alt="Аватар" class="avatar-large">
+        <h1 th:text="${profileUser.username}"></h1>
+        <p th:if="${profileUser.city}" th:text="${profileUser.city}" class="city"></p>
+        <p th:if="${profileUser.bio}" th:text="${profileUser.bio}" class="bio"></p>
+
+        <a sec:authorize="isAuthenticated()"
+           th:if="${#authentication.name == profileUser.email}"
+           th:href="@{/profile/edit}" class="btn">Редактировать профиль</a>
+    </div>
+
+    <h2>Мои списки</h2>
+    <div th:if="${isOwner}">
+        <a th:href="@{/lists/create}" class="btn">Создать список</a>
+    </div>
+    <div th:if="${allLists != null && !allLists.isEmpty()}">
+        <div th:each="list : ${allLists}" class="card list-card">
+            <div class="list-card-body">
+                <h3><a th:href="@{'/lists/' + ${list.id}}" th:text="${list.name}"></a></h3>
+                <p class="list-card-desc" th:if="${list.description}" th:text="${list.description}"></p>
+                <div class="list-card-meta">
+                    <span class="list-badge"
+                          th:classappend="${list.isPublic} ? 'badge-public' : 'badge-private'"
+                          th:text="${list.isPublic} ? 'Публичный' : 'Приватный'"></span>
+                    <span th:text="${#lists.size(list.items)} + ' элементов'"></span>
+                    <span th:if="${list.itemType != null}">
+                        Тип:
+                        <span th:if="${list.itemType.name() == 'RESTAURANT'}">Заведения</span>
+                        <span th:unless="${list.itemType.name() == 'RESTAURANT'}">Блюда</span>
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div th:if="${isOwner && (allLists == null || allLists.isEmpty())}" class="empty-state">
+        <p>У вас пока нет списков. Создайте первый!</p>
+    </div>
+
+    <!-- Для невладельцев показываем только публичные списки -->
+    <div th:if="${!isOwner}">
+        <div th:if="${!publicLists.isEmpty()}">
+            <div th:each="list : ${publicLists}" class="card list-card">
+                <div class="list-card-body">
+                    <h3><a th:href="@{'/lists/' + ${list.id}}" th:text="${list.name}"></a></h3>
+                    <p class="list-card-desc" th:if="${list.description}" th:text="${list.description}"></p>
+                </div>
+            </div>
+        </div>
+        <div th:if="${publicLists.isEmpty()}" class="empty-state">
+            <p>Публичных списков пока нет.</p>
+        </div>
+    </div>
+
+    <h2>Оценки</h2>
+    <div th:if="${ratings.isEmpty()}">
+        <p class="empty-state">Пока нет оценок.</p>
+    </div>
+    <div th:each="r : ${ratings}" class="card rating-card">
+        <div class="rating-card-header">
+            <span class="rating-type-badge"
+                  th:classappend="${r.itemType.name() == 'RESTAURANT'} ? 'badge-restaurant' : 'badge-dish'"
+                  th:text="${r.itemType.name() == 'RESTAURANT'} ? 'Ресторан' : 'Блюдо'"></span>
+            <span class="rating-score-badge" th:text="${#numbers.formatDecimal(r.score, 1, 1)} + ' ★'"></span>
+        </div>
+        <div class="rating-card-body">
+            <strong>
+                <a th:if="${r.itemType.name() == 'RESTAURANT'}"
+                   th:href="@{'/restaurants/' + ${r.itemId}}" th:text="${r.itemName}"></a>
+                <span th:unless="${r.itemType.name() == 'RESTAURANT'}"
+                      th:text="${r.itemName}"></span>
+            </strong>
+            <div th:if="${r.itemType.name() == 'MENU_ITEM' && r.restaurantName != null}"
+                 class="rating-restaurant-link">
+                из <a th:href="@{'/restaurants/' + ${r.restaurantId}}" th:text="${r.restaurantName}"></a>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>
