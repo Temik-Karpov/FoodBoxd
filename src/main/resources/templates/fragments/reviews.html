@@ -2,17 +2,19 @@
 <html xmlns:th="http://www.thymeleaf.org"
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <body>
-<div th:fragment="reviews(reviews, reviewCount, itemType, itemId)">
-    <h3>Комментарии (<span th:text="${reviewCount}"></span>)</h3>
+<div th:fragment="reviews(reviews, reviewCount, itemType, itemId)" class="reviews-block">
+    <h3>Комментарии (<span class="reviews-count" th:text="${reviewCount}"></span>)</h3>
 
-    <div th:if="${reviews != null && !reviews.isEmpty()}">
-        <div th:each="review : ${reviews}" class="review-item">
+    <div class="reviews-list">
+        <div th:each="review : ${reviews}" class="review-item"
+             th:attr="data-username=${review.user.username}">
             <div class="review-header">
                 <img th:src="${review.user.avatarUrl != null ? review.user.avatarUrl : '/images/default-avatar.png'}"
                      alt="Аватар" class="review-avatar">
                 <div class="review-meta">
                     <strong th:text="${review.user.username}"></strong>
-                    <span class="review-score">★ <span th:text="${#numbers.formatDecimal(review.score, 1, 1)}"></span></span>
+                    <span class="review-score" th:if="${review.score != null}"><i class="fas fa-star"></i> <span th:text="${#numbers.formatDecimal(review.score, 1, 1)}"></span></span>
+                    <span class="review-no-score" th:if="${review.score == null}">без оценки</span>
                     <span class="review-date" th:text="${#temporals.format(review.createdAt, 'dd.MM.yyyy HH:mm')}"></span>
                 </div>
                 <!-- Кнопка удаления для админа -->
@@ -26,12 +28,14 @@
             <div class="review-body" th:text="${review.review}"></div>
         </div>
     </div>
-    <div th:if="${reviews == null || reviews.isEmpty()}">
-        <p class="empty-state">Пока нет комментариев.</p>
+
+    <div th:if="${reviews == null || reviews.isEmpty()}" class="empty-state reviews-empty">
+        <i class="fas fa-comments"></i>
+        Пока нет комментариев.
     </div>
 
     <!-- Кнопка «Показать все» -->
-    <div th:if="${reviewCount > 5}">
+    <div th:if="${reviewCount > 5}" class="show-all-reviews">
         <a th:href="@{/reviews/{itemType}/{itemId}(itemType=${itemType}, itemId=${itemId})}"
            class="btn btn-sm btn-secondary">Показать все комментарии</a>
     </div>

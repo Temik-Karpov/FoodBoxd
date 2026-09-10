@@ -31,8 +31,8 @@ public class Rating {
     @Column(name = "rated_item_id", nullable = false)
     private Long ratedItemId; // ID ресторана или блюда
 
-    @Column(nullable = false, precision = 2, scale = 1)
-    private BigDecimal score; // от 0.5 до 5.0 с шагом 0.5
+    @Column(precision = 2, scale = 1)
+    private BigDecimal score; // от 0.5 до 5.0; null, если оставлен только текстовый отзыв
 
     @Column(length = 1000)
     private String review; // необязательный текстовый отзыв

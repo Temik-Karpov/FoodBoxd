@@ -5,13 +5,23 @@
 </head>
 <body>
 <div class="container" th:fragment="content">
-    <div class="card" style="max-width: 500px; margin: 2rem auto;">
+    <div class="card form-card">
         <h2 th:text="${restaurantId == null ? 'Новый ресторан' : 'Редактирование'}"></h2>
         <form th:action="@{${restaurantId == null ? '/admin/restaurants/create' : '/admin/restaurants/' + restaurantId + '/edit'}}" th:object="${restaurant}" method="post">
-            <label>Название: <input type="text" th:field="*{name}" required></label><br>
-            <label>Адрес: <input type="text" th:field="*{address}"></label><br>
-            <label>Описание: <textarea th:field="*{description}"></textarea></label><br>
+            <div class="form-group">
+                <label>Название</label>
+                <input type="text" th:field="*{name}" placeholder="Название заведения" required>
+            </div>
+            <div class="form-group">
+                <label>Адрес</label>
+                <input type="text" th:field="*{address}" placeholder="Город, улица, дом">
+            </div>
+            <div class="form-group">
+                <label>Описание</label>
+                <textarea th:field="*{description}" rows="4" placeholder="Кухня, атмосфера, фишки заведения..."></textarea>
+            </div>
             <button type="submit" class="btn">Сохранить</button>
+            <a th:href="@{/admin/restaurants}" class="btn btn-secondary">Отмена</a>
         </form>
     </div>
 </div>

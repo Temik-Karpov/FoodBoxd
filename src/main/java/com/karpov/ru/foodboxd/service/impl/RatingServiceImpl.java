@@ -44,7 +44,7 @@ public class RatingServiceImpl implements RatingService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("Пользователь не найден"));
 
-        if (score.compareTo(BigDecimal.valueOf(0.5)) < 0 || score.compareTo(BigDecimal.valueOf(5.0)) > 0) {
+        if (score != null && (score.compareTo(BigDecimal.valueOf(0.5)) < 0 || score.compareTo(BigDecimal.valueOf(5.0)) > 0)) {
             throw new IllegalArgumentException("Оценка должна быть от 0.5 до 5.0");
         }
 
@@ -56,7 +56,9 @@ public class RatingServiceImpl implements RatingService {
                         .ratedItemId(itemId)
                         .build());
 
-        rating.setScore(score);
+        if (score != null) {
+            rating.setScore(score);
+        }
         rating.setReview(review);
         Rating saved = ratingRepository.save(rating);
 

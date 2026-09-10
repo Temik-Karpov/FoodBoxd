@@ -5,21 +5,27 @@
 </head>
 <body>
 <div class="container" th:fragment="content">
-    <div class="card" style="max-width: 400px; margin: 2rem auto;">
+    <div class="card auth-card">
+        <span class="auth-icon"><i class="fas fa-sign-in-alt"></i></span>
         <h2>Вход</h2>
         <form th:action="@{/login}" method="post">
             <div th:if="${param.error}"><p class="error-message">Неверные учетные данные</p></div>
             <div th:if="${param.registered}"><p class="success-message">Регистрация успешна. Войдите.</p></div>
             <div class="form-group">
-                <label>Email: <input type="email" name="username" required></label>
+                <label>Email</label>
+                <input type="email" name="username" placeholder="you@example.com" required>
             </div>
             <div class="form-group">
-                <label>Пароль: <input type="password" name="password" required></label>
+                <label>Пароль</label>
+                <input type="password" name="password" placeholder="••••••••" required>
             </div>
             <button type="submit" class="btn">Войти</button>
         </form>
-        <p style="margin-top: 1rem; text-align: center;">
+        <p class="auth-footer">
             <a th:href="@{/forgot-password}">Забыли пароль?</a>
+        </p>
+        <p class="auth-footer">
+            Нет аккаунта? <a th:href="@{/register}">Зарегистрироваться</a>
         </p>
     </div>
 </div>

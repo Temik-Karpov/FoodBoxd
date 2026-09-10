@@ -5,30 +5,67 @@
 </head>
 <body>
 <div class="container" th:fragment="content">
-    <h2>Рестораны и бары</h2>
+    <!-- Hero -->
+    <section class="hero">
+        <span class="hero-eyebrow"><i class="fas fa-star"></i> Рейтинги и обзоры</span>
+        <h1>Рестораны и бары</h1>
+        <p>Находите лучшие заведения, оценивайте их по достоинству и собирайте собственные списки любимых мест.</p>
+        <div class="hero-stats">
+            <span class="hero-stat">
+                <i class="fas fa-utensils"></i>
+                <span th:text="${restaurants.totalElements} + ' заведений'">заведения</span>
+            </span>
+            <span class="hero-stat">
+                <i class="fas fa-star"></i>
+                <span>Честные оценки</span>
+            </span>
+            <span class="hero-stat">
+                <i class="fas fa-list"></i>
+                <span>Личные списки</span>
+            </span>
+        </div>
+    </section>
+
+    <h2>Популярные заведения</h2>
+
     <div th:if="${restaurants.isEmpty()}">
-        <p class="empty-state">Пока нет заведений.</p>
+        <p class="empty-state">
+            <i class="fas fa-utensils"></i>
+            Пока нет заведений.
+        </p>
     </div>
+
     <div class="restaurant-grid" th:if="${!restaurants.isEmpty()}">
         <a th:each="r : ${restaurants.getContent()}"
            th:href="@{'/restaurants/' + ${r.id}}"
            class="restaurant-card card">
             <div class="restaurant-card-img">
                 <img th:src="@{/images/default-restaurant.png}" alt="Фото заведения">
+                <span class="restaurant-card-rating" th:if="${r.averageRating != null}">
+                    <i class="fas fa-star"></i>
+                    <span th:text="${#numbers.formatDecimal(r.averageRating, 1, 1)}"></span>
+                </span>
             </div>
             <div class="restaurant-card-body">
                 <h3 th:text="${r.name}"></h3>
-                <p class="restaurant-card-address" th:text="${r.address}"></p>
-                <span class="restaurant-card-rating" th:if="${r.averageRating != null}">
-                    ★ <span th:text="${#numbers.formatDecimal(r.averageRating, 1, 1)}"></span>
-                </span>
+                <p class="restaurant-card-address" th:if="${r.address}">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <span th:text="${r.address}"></span>
+                </p>
+                <p class="restaurant-card-address" th:unless="${r.address}">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <span>Адрес не указан</span>
+                </p>
             </div>
         </a>
     </div>
+
     <div th:if="${restaurants.totalPages > 1}" class="pagination">
         <a th:each="i : ${#numbers.sequence(0, restaurants.totalPages - 1)}"
-           th:href="@{/(page=${i})}" th:text="${i+1}" class="btn btn-sm"
-           th:classappend="${i == restaurants.number} ? 'btn' : 'btn-secondary'"></a>
+           th:href="@{/(page=${i})}"
+           class="btn btn-sm"
+           th:classappend="${i == restaurants.number} ? 'btn' : 'btn-secondary'"
+           th:text="${i+1}"></a>
     </div>
 </div>
 </body>

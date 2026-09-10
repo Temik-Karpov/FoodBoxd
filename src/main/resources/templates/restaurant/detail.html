@@ -19,28 +19,27 @@
     <div class="restaurant-hero">
         <div class="restaurant-hero-img">
             <img th:src="${!photos.isEmpty() ? photos[0].url : '/images/default-restaurant.png'}" alt="Фото заведения">
+            <span class="restaurant-hero-img-badge" th:if="${restaurant.averageRating != null}">
+                <i class="fas fa-star"></i>
+                <span th:text="${#numbers.formatDecimal(restaurant.averageRating, 1, 1)}"></span>
+            </span>
         </div>
-        <div class="restaurant-hero-info card">
+        <div class="restaurant-hero-info">
             <h1 th:text="${restaurant.name}"></h1>
-            <p class="restaurant-hero-address">
+            <p class="restaurant-hero-address" th:if="${restaurant.address}">
                 <i class="fas fa-map-marker-alt"></i>
                 <span th:text="${restaurant.address}"></span>
             </p>
             <div class="restaurant-hero-rating" th:if="${restaurant.averageRating != null}">
                 <span class="rating-stars-display">
-                    ★ <span th:text="${#numbers.formatDecimal(restaurant.averageRating, 1, 1)}"></span>
+                    <i class="fas fa-star"></i>
+                    <span th:text="${#numbers.formatDecimal(restaurant.averageRating, 1, 1)}"></span>
+                    <span class="restaurant-hero-rating-count" th:if="${reviewCount != null}" th:text="'(' + ${reviewCount} + ')'"></span>
                 </span>
             </div>
             <p class="restaurant-hero-desc" th:if="${restaurant.description}" th:text="${restaurant.description}"></p>
         </div>
     </div>
-
-    <!-- Карта Яндекс
-    <div class="card" th:if="${restaurant.address != null && !restaurant.address.isEmpty()}">
-        <h3>На карте</h3>
-        <div id="yandex-map" style="width:100%;height:300px;border-radius:12px;"
-             th:attr="data-address=${restaurant.address}, data-name=${restaurant.name}"></div>
-    </div>-->
 
     <!-- Галерея фотографий -->
     <div class="card">
@@ -56,7 +55,10 @@
                 </form>
             </div>
         </div>
-        <p th:if="${photos.isEmpty()}" class="empty-state">Фотографий пока нет.</p>
+        <p th:if="${photos.isEmpty()}" class="empty-state">
+            <i class="fas fa-camera"></i>
+            Фотографий пока нет.
+        </p>
         <!-- Загрузка фото (админ) -->
         <div sec:authorize="hasRole('ADMIN')" class="photo-upload">
             <form th:action="@{'/restaurants/' + ${restaurant.id} + '/photos/upload'}"
@@ -80,11 +82,33 @@
         </div>
         <input type="hidden" class="rating-score-input"
                th:value="${userRating?.score != null ? userRating.score : 0}">
-        <textarea class="rating-review-input" placeholder="Оставьте комментарий (необязательно)..."
-                  rows="2" th:text="${userRating?.review}"></textarea>
         <div class="rating-info">
             <span>Средняя: <span class="avg-rating-value rating-value"
                                  th:text="${restaurant.averageRating != null ? #numbers.formatDecimal(restaurant.averageRating, 1, 1) : '-'}">-</span></span>
+            <span class="my-rating" th:if="${userRating?.score != null}">
+                <i class="fas fa-star"></i> Ваша оценка: <span class="my-rating-value" th:text="${#numbers.formatDecimal(userRating.score, 1, 1)}"></span>
+            </span>
+        </div>
+
+        <!-- Композер отзыва -->
+        <div class="review-composer">
+            <div class="review-composer-avatar">
+                <img th:src="${currentUserAvatar}" alt="Ваш аватар">
+            </div>
+            <div class="review-composer-body">
+                <textarea class="rating-review-input" rows="3"
+                          placeholder="Поделитесь впечатлением: кухня, атмосфера, сервис..."
+                          th:text="${userRating?.review}"></textarea>
+                <div class="review-composer-actions">
+                    <span class="review-composer-status" aria-live="polite"></span>
+                    <span class="review-composer-hint">
+                        <i class="fas fa-info-circle"></i> Можно отправить отзыв и без оценки
+                    </span>
+                    <button type="button" class="btn btn-sm review-submit-btn">
+                        <i class="fas fa-paper-plane"></i> Отправить
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -106,7 +130,8 @@
                               th:text="${item.alcoholPercentage} + '%'"></span>
                     </div>
                     <span class="menu-card-rating" th:if="${item.averageRating != null}">
-                        ★ <span th:text="${#numbers.formatDecimal(item.averageRating, 1, 1)}"></span>
+                        <i class="fas fa-star"></i>
+                        <span th:text="${#numbers.formatDecimal(item.averageRating, 1, 1)}"></span>
                     </span>
                 </div>
             </a>
@@ -119,10 +144,13 @@
             </div>
         </div>
     </div>
-    <p th:if="${menuItems.isEmpty()}" class="empty-state">Меню пока не добавлено.</p>
+    <p th:if="${menuItems.isEmpty()}" class="empty-state">
+        <i class="fas fa-book-open"></i>
+        Меню пока не добавлено.
+    </p>
 
     <!-- Комментарии -->
-    <div class="card" th:if="${reviews != null}">
+    <div class="card reviews-card" th:if="${reviews != null}">
         <div th:replace="~{fragments/reviews :: reviews(${reviews}, ${reviewCount}, 'RESTAURANT', ${restaurant.id})}"></div>
     </div>
 

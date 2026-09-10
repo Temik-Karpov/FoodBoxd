@@ -1,37 +1,47 @@
 <!DOCTYPE html>
 <html th:replace="~{fragments/layout :: layout(~{::title}, ~{::.container})}">
 <head>
-    <title>Новый список</title>
+    <title>Мои списки - Foodboxd</title>
 </head>
 <body>
 <div class="container" th:fragment="content">
-    <div class="card" style="max-width: 500px; margin: 2rem auto;">
-        <h2>Создать список</h2>
-        <form th:action="@{/lists/create}" method="post">
-            <div class="form-group">
-                <label for="name">Название</label>
-                <input type="text" id="name" name="name" required>
+    <div class="admin-bar">
+        <h2 style="margin: 0; flex: 1;">Мои списки</h2>
+        <a th:href="@{/lists/create}" class="btn btn-sm">
+            <i class="fas fa-plus"></i> Создать список
+        </a>
+    </div>
+
+    <div th:if="${lists.isEmpty()}" class="card">
+        <p class="empty-state">
+            <i class="fas fa-list"></i>
+            У вас пока нет списков. Создайте первый!
+        </p>
+    </div>
+
+    <div class="lists-grid" th:if="${!lists.isEmpty()}">
+        <a th:each="list : ${lists}"
+           th:href="@{'/lists/' + ${list.id}}"
+           class="card list-card">
+            <div class="list-card-body">
+                <h3 th:text="${list.name}"></h3>
+                <p class="list-card-desc" th:if="${list.description}" th:text="${list.description}"></p>
+                <div class="list-card-meta">
+                    <span class="list-badge"
+                          th:classappend="${list.isPublic} ? 'badge-public' : 'badge-private'"
+                          th:text="${list.isPublic} ? 'Публичный' : 'Приватный'"></span>
+                    <span class="list-count">
+                        <i class="fas fa-th-list"></i>
+                        <span th:text="${#lists.size(list.items)}"></span>
+                    </span>
+                    <span class="list-type"
+                          th:if="${list.itemType != null}"
+                          th:text="${list.itemType.name() == 'RESTAURANT'} ? 'Заведения' : 'Блюда и напитки'"></span>
+                </div>
+                <span class="list-created" th:if="${list.createdAt != null}"
+                      th:text="'Создан ' + ${#temporals.format(list.createdAt, 'dd.MM.yyyy')}"></span>
             </div>
-            <div class="form-group">
-                <label for="description">Описание</label>
-                <textarea id="description" name="description" rows="3"></textarea>
-            </div>
-            <div class="form-group">
-                <label for="itemType">Тип списка</label>
-                <select id="itemType" name="itemType" required>
-                    <option value="RESTAURANT">Заведения (рестораны, бары)</option>
-                    <option value="MENU_ITEM">Блюда и напитки</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>
-                    <input type="checkbox" name="isPublic" value="true">
-                    Публичный список
-                </label>
-            </div>
-            <button type="submit" class="btn">Создать</button>
-            <a th:href="@{/lists}" class="btn btn-secondary">Отмена</a>
-        </form>
+        </a>
     </div>
 </div>
 </body>

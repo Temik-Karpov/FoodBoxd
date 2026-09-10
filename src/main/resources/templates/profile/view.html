@@ -41,6 +41,7 @@
         </div>
     </div>
     <div th:if="${isOwner && (allLists == null || allLists.isEmpty())}" class="empty-state">
+        <i class="fas fa-list"></i>
         <p>У вас пока нет списков. Создайте первый!</p>
     </div>
 
@@ -55,13 +56,17 @@
             </div>
         </div>
         <div th:if="${publicLists.isEmpty()}" class="empty-state">
+            <i class="fas fa-list"></i>
             <p>Публичных списков пока нет.</p>
         </div>
     </div>
 
     <h2>Оценки</h2>
     <div th:if="${ratings.isEmpty()}">
-        <p class="empty-state">Пока нет оценок.</p>
+        <p class="empty-state">
+            <i class="fas fa-star"></i>
+            Пока нет оценок.
+        </p>
     </div>
     <div th:each="r : ${ratings}" class="card rating-card">
         <div class="rating-card-header">

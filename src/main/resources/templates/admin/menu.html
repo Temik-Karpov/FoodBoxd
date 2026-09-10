@@ -5,13 +5,27 @@
 </head>
 <body>
 <div class="container" th:fragment="content">
-    <h2>Меню ресторана</h2>
-    <a th:href="@{'/admin/restaurants/' + ${restaurantId} + '/menu/create'}" class="btn">Добавить позицию</a>
+    <div class="admin-bar">
+        <h2 style="margin:0; flex:1;">Меню ресторана</h2>
+        <a th:href="@{'/admin/restaurants/' + ${restaurantId} + '/menu/create'}" class="btn btn-sm">
+            <i class="fas fa-plus"></i> Добавить позицию
+        </a>
+    </div>
+
+    <div th:if="${menu.isEmpty()}" class="card">
+        <p class="empty-state">
+            <i class="fas fa-book-open"></i>
+            Позиций пока нет.
+        </p>
+    </div>
+
     <div th:each="item : ${menu}" class="card">
         <h3 th:text="${item.name}"></h3>
-        <span th:text="${'Цена: ' + item.price}"></span>
-        <span th:if="${item.isAlcoholic}" th:text="${'Крепость: ' + item.alcoholPercentage + '%'}"></span>
-        <!-- кнопки редактирования/скрытия (можно добавить) -->
+        <div style="display:flex; gap:14px; flex-wrap:wrap; color: var(--text-muted); margin: 6px 0 0;">
+            <span style="font-weight:700; color: var(--primary-hover);" th:text="${'Цена: ' + item.price + ' ₽'}"></span>
+            <span th:if="${item.isAlcoholic}" th:text="${'Крепость: ' + item.alcoholPercentage + '%'}"></span>
+            <span th:if="${!item.isAlcoholic}" class="badge-public list-badge" style="margin-left:auto;">Не алкогольное</span>
+        </div>
     </div>
 </div>
 </body>

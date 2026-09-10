@@ -30,6 +30,7 @@
     <!-- Список элементов -->
     <h2>Элементы списка</h2>
     <div th:if="${enrichedItems == null || enrichedItems.isEmpty()}" class="empty-state">
+        <i class="fas fa-list"></i>
         <p>Список пока пуст. Добавьте элементы через поиск.</p>
     </div>
     <div id="sortable-list" class="sortable-list"

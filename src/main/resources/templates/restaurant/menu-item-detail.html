@@ -14,8 +14,10 @@
     </div>
 
     <div class="breadcrumbs">
-        <a th:href="@{/}">Главная</a> ›
-        <a th:href="@{'/restaurants/' + ${item.restaurant.id}}" th:text="${item.restaurant.name}"></a> ›
+        <a th:href="@{/}">Главная</a>
+        <span class="sep">›</span>
+        <a th:href="@{'/restaurants/' + ${item.restaurant.id}}" th:text="${item.restaurant.name}"></a>
+        <span class="sep">›</span>
         <span th:text="${item.name}"></span>
     </div>
 
@@ -47,7 +49,8 @@
                 <div class="meta-item" th:if="${item.averageRating != null}">
                     <span class="meta-label">Рейтинг</span>
                     <span class="meta-value rating-highlight">
-                        ★ <span th:text="${#numbers.formatDecimal(item.averageRating, 1, 1)}"></span>
+                        <i class="fas fa-star"></i>
+                        <span th:text="${#numbers.formatDecimal(item.averageRating, 1, 1)}"></span>
                     </span>
                 </div>
             </div>
@@ -65,11 +68,33 @@
                 </div>
                 <input type="hidden" class="rating-score-input"
                        th:value="${userRating?.score != null ? userRating.score : 0}">
-                <textarea class="rating-review-input" placeholder="Оставьте комментарий (необязательно)..."
-                          rows="2" th:text="${userRating?.review}"></textarea>
                 <div class="rating-info">
                     <span>Средняя: <span class="avg-rating-value rating-value"
                                          th:text="${item.averageRating != null ? #numbers.formatDecimal(item.averageRating, 1, 1) : '-'}">-</span></span>
+                    <span class="my-rating" th:if="${userRating?.score != null}">
+                        <i class="fas fa-star"></i> Ваша оценка: <span class="my-rating-value" th:text="${#numbers.formatDecimal(userRating.score, 1, 1)}"></span>
+                    </span>
+                </div>
+
+                <!-- Композер отзыва -->
+                <div class="review-composer">
+                    <div class="review-composer-avatar">
+                        <img th:src="${currentUserAvatar}" alt="Ваш аватар">
+                    </div>
+                    <div class="review-composer-body">
+                        <textarea class="rating-review-input" rows="3"
+                                  placeholder="Поделитесь впечатлением о блюде..."
+                                  th:text="${userRating?.review}"></textarea>
+                        <div class="review-composer-actions">
+                            <span class="review-composer-status" aria-live="polite"></span>
+                            <span class="review-composer-hint">
+                                <i class="fas fa-info-circle"></i> Можно отправить отзыв и без оценки
+                            </span>
+                            <button type="button" class="btn btn-sm review-submit-btn">
+                                <i class="fas fa-paper-plane"></i> Отправить
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -89,7 +114,10 @@
                 </form>
             </div>
         </div>
-        <p th:if="${photos.isEmpty()}" class="empty-state">Фотографий пока нет.</p>
+        <p th:if="${photos.isEmpty()}" class="empty-state">
+            <i class="fas fa-camera"></i>
+            Фотографий пока нет.
+        </p>
         <!-- Загрузка фото (админ) -->
         <div sec:authorize="hasRole('ADMIN')" class="photo-upload">
             <form th:action="@{'/menu-item/' + ${item.id} + '/photos/upload'}"
