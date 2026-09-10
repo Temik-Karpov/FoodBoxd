@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.math.BigDecimal;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -73,4 +74,14 @@ public interface RatingRepository extends JpaRepository<Rating, Long> {
      */
     @Query("SELECT COUNT(r) FROM Rating r WHERE r.ratedItemType = :itemType AND r.ratedItemId = :itemId AND r.review IS NOT NULL AND r.review <> ''")
     long countReviewsByItem(@Param("itemType") ItemType itemType, @Param("itemId") Long itemId);
+
+    /**
+     * Возвращает последние оценки указанных пользователей (для ленты подписок).
+     *
+     * @param userIds  ID пользователей
+     * @param pageable ограничение количества
+     * @return оценки, отсортированные по времени создания
+     */
+    @Query("SELECT r FROM Rating r WHERE r.user.id IN :userIds ORDER BY r.createdAt DESC")
+    List<Rating> findRecentByUserIds(@Param("userIds") Collection<Long> userIds, Pageable pageable);
 }

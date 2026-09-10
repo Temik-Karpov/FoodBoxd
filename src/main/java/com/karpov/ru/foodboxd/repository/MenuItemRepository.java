@@ -31,4 +31,12 @@ public interface MenuItemRepository extends JpaRepository<MenuItem, Long> {
      * @return список подходящих позиций
      */
     List<MenuItem> findByIsAvailableTrueAndNameContainingIgnoreCase(String name);
+
+    /**
+     * Поиск доступных позиций меню конкретного ресторана по названию (без учёта регистра).
+     * @param restaurantId идентификатор ресторана
+     * @param name часть названия
+     * @return список подходящих позиций
+     */
+    List<MenuItem> findByRestaurantIdAndIsAvailableTrueAndNameContainingIgnoreCase(Long restaurantId, String name);
 }

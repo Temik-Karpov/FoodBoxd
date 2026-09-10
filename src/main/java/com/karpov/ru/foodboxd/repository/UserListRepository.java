@@ -23,4 +23,11 @@ public interface UserListRepository extends JpaRepository<UserList, Long> {
      * @return список всех списков пользователя
      */
     List<UserList> findAllByOwnerId(Long ownerId);
+
+    /**
+     * Считает публичные списки пользователя.
+     * @param ownerId ID владельца
+     * @return количество публичных списков
+     */
+    long countByOwnerIdAndIsPublicTrue(Long ownerId);
 }

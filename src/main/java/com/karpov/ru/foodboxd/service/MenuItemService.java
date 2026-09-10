@@ -69,4 +69,13 @@ public interface MenuItemService {
      * @return список подходящих позиций
      */
     List<MenuItem> searchByName(String query, int limit);
+
+    /**
+     * Поиск доступных позиций меню конкретного ресторана по названию.
+     * @param restaurantId идентификатор ресторана
+     * @param query поисковый запрос
+     * @param limit максимальное количество результатов
+     * @return список подходящих позиций ресторана
+     */
+    List<MenuItem> searchByRestaurant(Long restaurantId, String query, int limit);
 }

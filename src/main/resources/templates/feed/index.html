@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html th:replace="~{fragments/layout :: layout(~{::title}, ~{::.container})}">
+<head>
+    <title>Лента - Foodboxd</title>
+</head>
+<body>
+<div class="container" th:fragment="content">
+    <div class="admin-bar">
+        <h2 style="margin: 0; flex: 1;">Лента</h2>
+        <a th:href="@{/users}" class="btn btn-sm btn-secondary">
+            <i class="fas fa-user-plus"></i> Найти людей
+        </a>
+    </div>
+
+    <p class="feed-subtitle" th:if="${!following.isEmpty()}">
+        Новые оценки и комментарии от пользователей, на которых вы подписаны
+        (<span th:text="${#lists.size(following)}"></span>).
+    </p>
+
+    <div th:if="${following.isEmpty()}" class="empty-state">
+        <i class="fas fa-stream"></i>
+        <p>Вы пока ни на кого не подписаны.</p>
+        <p><a th:href="@{/users}" class="btn btn-sm">Найти пользователей</a></p>
+    </div>
+
+    <div th:if="${!following.isEmpty() && feedItems.isEmpty()}" class="empty-state">
+        <i class="fas fa-star"></i>
+        <p>У ваших подписок пока нет оценок и комментариев.</p>
+    </div>
+
+    <div class="feed-list" th:if="${!feedItems.isEmpty()}">
+        <div th:each="f : ${feedItems}" class="card feed-item">
+            <div class="feed-item-header">
+                <a th:href="@{/profile/{email}(email=${f.authorEmail})}">
+                    <img th:src="${f.authorAvatarUrl != null ? f.authorAvatarUrl : '/images/default-avatar.png'}"
+                         alt="Аватар" class="feed-avatar">
+                </a>
+                <div class="feed-item-meta">
+                    <a class="feed-author" th:href="@{/profile/{email}(email=${f.authorEmail})}"
+                       th:text="${f.authorUsername}"></a>
+                    <span class="feed-date" th:if="${f.createdAt != null}"
+                          th:text="${#temporals.format(f.createdAt, 'dd.MM.yyyy HH:mm')}"></span>
+                </div>
+                <span class="rating-type-badge"
+                      th:classappend="${f.itemType.name() == 'RESTAURANT'} ? 'badge-restaurant' : 'badge-dish'"
+                      th:text="${f.itemType.name() == 'RESTAURANT'} ? 'Ресторан' : 'Блюдо'"></span>
+            </div>
+            <div class="feed-item-body">
+                <a th:if="${f.itemLink != null}" th:href="${f.itemLink}" th:text="${f.itemName}"></a>
+                <span th:unless="${f.itemLink != null}" th:text="${f.itemName}"></span>
+                <span class="feed-restaurant" th:if="${f.restaurantName != null}">
+                    · из
+                    <a th:href="${f.restaurantLink}" th:text="${f.restaurantName}"></a>
+                </span>
+                <span class="feed-score" th:if="${f.score != null}">
+                    ★ <span th:text="${#numbers.formatDecimal(f.score, 1, 1)}"></span>
+                </span>
+            </div>
+            <div class="feed-review" th:if="${!#strings.isEmpty(f.review)}" th:text="${f.review}"></div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

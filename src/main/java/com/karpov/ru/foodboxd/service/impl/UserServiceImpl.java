@@ -18,6 +18,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -71,6 +72,20 @@ public class UserServiceImpl implements UserService {
     @Override
     public Optional<User> getUserById(Long id) {
         return userRepository.findById(id);
+    }
+
+    @Override
+    public List<User> getAllUsers() {
+        return userRepository.findAllByOrderByUsernameAsc();
+    }
+
+    @Override
+    public List<User> searchUsers(String query) {
+        if (query == null || query.isBlank()) {
+            return getAllUsers();
+        }
+        String q = query.trim();
+        return userRepository.findByUsernameContainingIgnoreCaseOrCityContainingIgnoreCaseOrderByUsernameAsc(q, q);
     }
 
     @Override

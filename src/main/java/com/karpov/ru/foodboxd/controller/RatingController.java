@@ -31,7 +31,7 @@ public class RatingController {
      * Устанавливает или изменяет оценку для объекта (ресторана или блюда).
      * @param itemType тип объекта (restaurant или menu_item)
      * @param itemId ID объекта
-     * @param score оценка (0.5–5.0), необязательна — можно оставить только отзыв
+     * @param score оценка (0.5–5.0), обязательна
      * @param review текстовый отзыв (необязательный)
      * @param principal текущий пользователь
      * @return JSON с оценкой пользователя и обновлённым средним рейтингом
@@ -47,8 +47,8 @@ public class RatingController {
             return ResponseEntity.status(401).body(Map.of("error", "Требуется авторизация"));
         }
 
-        if (score == null && (review == null || review.isBlank())) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Добавьте оценку или текст отзыва"));
+        if (score == null) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Поставьте оценку, чтобы отправить отзыв"));
         }
 
         ItemType type = ItemType.valueOf(itemType.toUpperCase());

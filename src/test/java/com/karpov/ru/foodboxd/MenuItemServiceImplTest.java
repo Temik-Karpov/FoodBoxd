@@ -77,4 +77,40 @@ class MenuItemServiceImplTest {
         List<MenuItem> items = menuItemService.findAvailableByRestaurant(1L);
         assertThat(items).hasSize(2);
     }
+
+    @Test
+    void searchByRestaurantShouldReturnItemsOfThatRestaurant() {
+        Restaurant restaurant = new Restaurant();
+        restaurant.setId(1L);
+        MenuItem item = MenuItem.builder()
+                .name("Пицца Маргарита")
+                .price(new BigDecimal("600"))
+                .restaurant(restaurant)
+                .build();
+        when(menuItemRepository.findByRestaurantIdAndIsAvailableTrueAndNameContainingIgnoreCase(1L, "пицца"))
+                .thenReturn(List.of(item));
+
+        List<MenuItem> result = menuItemService.searchByRestaurant(1L, "пицца", 10);
+
+        assertThat(result).containsExactly(item);
+    }
+
+    @Test
+    void searchByRestaurantShouldLimitResults() {
+        Restaurant restaurant = new Restaurant();
+        List<MenuItem> many = java.util.stream.IntStream.range(0, 15)
+                .mapToObj(i -> MenuItem.builder().name("Блюдо " + i).restaurant(restaurant).build())
+                .toList();
+        when(menuItemRepository.findByRestaurantIdAndIsAvailableTrueAndNameContainingIgnoreCase(1L, "блюдо"))
+                .thenReturn(many);
+
+        assertThat(menuItemService.searchByRestaurant(1L, "блюдо", 10)).hasSize(10);
+    }
+
+    @Test
+    void searchByRestaurantShouldReturnEmptyForBlankQueryOrNullRestaurant() {
+        assertThat(menuItemService.searchByRestaurant(1L, "   ", 10)).isEmpty();
+        assertThat(menuItemService.searchByRestaurant(null, "пицца", 10)).isEmpty();
+        verifyNoInteractions(menuItemRepository);
+    }
 }

@@ -4,10 +4,12 @@ import com.karpov.ru.foodboxd.model.entity.*;
 import com.karpov.ru.foodboxd.model.enums.ItemType;
 import com.karpov.ru.foodboxd.service.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.security.Principal;
 import java.util.ArrayList;
@@ -89,6 +91,12 @@ public class ListController {
             currentUserId = userService.findByEmail(principal.getName()).orElseThrow().getId();
         }
 
+        // Приватный список доступен только владельцу
+        boolean isOwner = currentUserId != null && list.getOwner().getId().equals(currentUserId);
+        if (!list.isPublic() && !isOwner) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Список приватный");
+        }
+
         for (UserListItem item : list.getItems()) {
             Map<String, Object> itemData = new HashMap<>();
             itemData.put("listItemId", item.getId());
@@ -120,20 +128,26 @@ public class ListController {
 
         model.addAttribute("list", list);
         model.addAttribute("enrichedItems", enrichedItems);
+        model.addAttribute("isOwner", isOwner);
         return "lists/view";
     }
 
     /**
      * Поиск элементов для добавления в список (AJAX).
+     * Для списка блюд можно ограничить поиск конкретным рестораном.
      * @param listId идентификатор списка
      * @param query поисковый запрос
+     * @param restaurantId ресторан для поиска блюд (необязательно)
+     * @param principal текущий пользователь
      * @return JSON с результатами поиска
      */
     @GetMapping("/{listId}/search")
     @ResponseBody
     public ResponseEntity<?> searchItems(@PathVariable Long listId,
-                                         @RequestParam String query) {
-        UserList list = userListService.getListById(listId);
+                                         @RequestParam String query,
+                                         @RequestParam(required = false) Long restaurantId,
+                                         Principal principal) {
+        UserList list = requireOwner(listId, principal);
 
         if (list.getItemType() == ItemType.RESTAURANT) {
             List<Restaurant> restaurants = restaurantService.searchByName(query, 10);
@@ -147,7 +161,9 @@ public class ListController {
                     .toList();
             return ResponseEntity.ok(results);
         } else {
-            List<MenuItem> items = menuItemService.searchByName(query, 10);
+            List<MenuItem> items = restaurantId != null
+                    ? menuItemService.searchByRestaurant(restaurantId, query, 10)
+                    : menuItemService.searchByName(query, 10);
             List<Map<String, Object>> results = items.stream()
                     .map(i -> Map.<String, Object>of(
                             "id", i.getId(),
@@ -162,16 +178,43 @@ public class ListController {
     }
 
     /**
+     * Поиск ресторанов для выбора перед поиском блюд (AJAX).
+     * @param listId идентификатор списка
+     * @param query поисковый запрос
+     * @param principal текущий пользователь
+     * @return JSON со списком ресторанов
+     */
+    @GetMapping("/{listId}/restaurants")
+    @ResponseBody
+    public ResponseEntity<?> searchRestaurants(@PathVariable Long listId,
+                                               @RequestParam String query,
+                                               Principal principal) {
+        requireOwner(listId, principal);
+
+        List<Restaurant> restaurants = restaurantService.searchByName(query, 10);
+        List<Map<String, Object>> results = restaurants.stream()
+                .map(r -> Map.<String, Object>of(
+                        "id", r.getId(),
+                        "name", r.getName(),
+                        "address", r.getAddress() != null ? r.getAddress() : ""
+                ))
+                .toList();
+        return ResponseEntity.ok(results);
+    }
+
+    /**
      * Добавляет элемент в список (AJAX).
      * @param listId идентификатор списка
      * @param itemId идентификатор объекта
+     * @param principal текущий пользователь
      * @return JSON с информацией о добавленном элементе
      */
     @PostMapping("/{listId}/add")
     @ResponseBody
     public ResponseEntity<?> addItem(@PathVariable Long listId,
-                                     @RequestParam Long itemId) {
-        UserList list = userListService.getListById(listId);
+                                     @RequestParam Long itemId,
+                                     Principal principal) {
+        UserList list = requireOwner(listId, principal);
         ItemType itemType = list.getItemType();
         var item = userListService.addItem(listId, itemType, itemId, 0);
 
@@ -187,12 +230,15 @@ public class ListController {
      * Удаляет элемент из списка (AJAX).
      * @param listId идентификатор списка
      * @param itemId идентификатор элемента списка
+     * @param principal текущий пользователь
      * @return JSON с подтверждением удаления
      */
     @DeleteMapping("/{listId}/remove/{itemId}")
     @ResponseBody
     public ResponseEntity<?> removeItem(@PathVariable Long listId,
-                                        @PathVariable Long itemId) {
+                                        @PathVariable Long itemId,
+                                        Principal principal) {
+        requireOwner(listId, principal);
         userListService.removeItem(listId, itemId);
         return ResponseEntity.ok(Map.of("success", true));
     }
@@ -201,13 +247,31 @@ public class ListController {
      * Обновляет порядок элементов в списке после перетаскивания.
      * @param listId идентификатор списка
      * @param itemIds упорядоченный список идентификаторов элементов
+     * @param principal текущий пользователь
      * @return JSON с подтверждением
      */
     @PostMapping("/{listId}/reorder")
     @ResponseBody
     public ResponseEntity<?> reorderItems(@PathVariable Long listId,
-                                          @RequestBody List<Long> itemIds) {
+                                          @RequestBody List<Long> itemIds,
+                                          Principal principal) {
+        requireOwner(listId, principal);
         userListService.reorderItems(listId, itemIds);
         return ResponseEntity.ok(Map.of("success", true));
+    }
+
+    /**
+     * Возвращает список, только если он принадлежит текущему пользователю.
+     * @param listId идентификатор списка
+     * @param principal текущий пользователь
+     * @return список владельца
+     */
+    private UserList requireOwner(Long listId, Principal principal) {
+        User user = userService.findByEmail(principal.getName()).orElseThrow();
+        UserList list = userListService.getListById(listId);
+        if (!list.getOwner().getId().equals(user.getId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Нет доступа к списку");
+        }
+        return list;
     }
 }

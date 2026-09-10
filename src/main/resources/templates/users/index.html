@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html th:replace="~{fragments/layout :: layout(~{::title}, ~{::.container})}">
+<head>
+    <title>Пользователи - Foodboxd</title>
+</head>
+<body>
+<div class="container" th:fragment="content">
+    <div class="admin-bar">
+        <h2 style="margin: 0; flex: 1;">Пользователи</h2>
+    </div>
+
+    <form th:action="@{/users}" method="get" class="card users-search">
+        <div class="search-input-wrap">
+            <input type="text" name="q" th:value="${query}" placeholder="Поиск по имени или городу...">
+            <div class="search-results"></div>
+        </div>
+        <button type="submit" class="btn btn-sm">Найти</button>
+        <a th:if="${!#strings.isEmpty(query)}" th:href="@{/users}" class="btn btn-sm btn-secondary">Сбросить</a>
+    </form>
+
+    <div th:if="${users.isEmpty()}" class="empty-state">
+        <i class="fas fa-user-slash"></i>
+        <p>Пользователи не найдены.</p>
+    </div>
+
+    <div class="users-grid" th:if="${!users.isEmpty()}">
+        <a th:each="u : ${users}"
+           th:href="@{/profile/{email}(email=${u.email})}"
+           class="card user-card">
+            <img th:src="${u.avatarUrl != null ? u.avatarUrl : '/images/default-avatar.png'}"
+                 alt="Аватар" class="user-card-avatar">
+            <div class="user-card-body">
+                <h3>
+                    <span th:text="${u.username}"></span>
+                    <span th:if="${u.email == currentEmail}" class="user-card-you">это вы</span>
+                </h3>
+                <p class="user-card-city" th:if="${u.city}">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <span th:text="${u.city}"></span>
+                </p>
+                <p class="user-card-bio" th:if="${u.bio}" th:text="${u.bio}"></p>
+                <p class="user-card-lists">
+                    <i class="fas fa-list"></i>
+                    <span th:text="'Публичных списков: ' + ${publicListCounts.get(u.id)}"></span>
+                </p>
+            </div>
+        </a>
+    </div>
+</div>
+</body>
+</html>

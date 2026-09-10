@@ -12,19 +12,39 @@
         <p th:if="${profileUser.city}" th:text="${profileUser.city}" class="city"></p>
         <p th:if="${profileUser.bio}" th:text="${profileUser.bio}" class="bio"></p>
 
-        <a sec:authorize="isAuthenticated()"
-           th:if="${#authentication.name == profileUser.email}"
-           th:href="@{/profile/edit}" class="btn">Редактировать профиль</a>
+        <div class="profile-stats">
+            <span class="profile-stat"><strong th:text="${followingCount}"></strong> подписок</span>
+            <span class="profile-stat"><strong th:text="${followerCount}"></strong> подписчиков</span>
+        </div>
+
+        <div class="profile-actions">
+            <a th:if="${isOwner}"
+               th:href="@{/profile/edit}" class="btn">Редактировать профиль</a>
+
+            <form th:if="${!isOwner && !isFollowing}"
+                  th:action="@{/profile/{email}/follow(email=${profileUser.email})}" method="post">
+                <button type="submit" class="btn">
+                    <i class="fas fa-user-plus"></i> Подписаться
+                </button>
+            </form>
+            <form th:if="${!isOwner && isFollowing}"
+                  th:action="@{/profile/{email}/unfollow(email=${profileUser.email})}" method="post">
+                <button type="submit" class="btn btn-secondary">
+                    <i class="fas fa-user-check"></i> Отписаться
+                </button>
+            </form>
+        </div>
     </div>
 
-    <h2>Мои списки</h2>
-    <div th:if="${isOwner}">
-        <a th:href="@{/lists/create}" class="btn">Создать список</a>
+    <h2 th:text="${isOwner} ? 'Мои списки' : 'Списки'"></h2>
+    <div th:if="${isOwner}" class="profile-list-actions">
+        <a th:href="@{/lists}" class="btn btn-sm btn-secondary">Все мои списки</a>
+        <a th:href="@{/lists/create}" class="btn btn-sm">Создать список</a>
     </div>
-    <div th:if="${allLists != null && !allLists.isEmpty()}">
-        <div th:each="list : ${allLists}" class="card list-card">
+    <div th:if="${lists != null && !lists.isEmpty()}" class="lists-grid">
+        <a th:each="list : ${lists}" th:href="@{'/lists/' + ${list.id}}" class="card list-card">
             <div class="list-card-body">
-                <h3><a th:href="@{'/lists/' + ${list.id}}" th:text="${list.name}"></a></h3>
+                <h3 th:text="${list.name}"></h3>
                 <p class="list-card-desc" th:if="${list.description}" th:text="${list.description}"></p>
                 <div class="list-card-meta">
                     <span class="list-badge"
@@ -38,27 +58,11 @@
                     </span>
                 </div>
             </div>
-        </div>
+        </a>
     </div>
-    <div th:if="${isOwner && (allLists == null || allLists.isEmpty())}" class="empty-state">
+    <div th:if="${lists == null || lists.isEmpty()}" class="empty-state">
         <i class="fas fa-list"></i>
-        <p>У вас пока нет списков. Создайте первый!</p>
-    </div>
-
-    <!-- Для невладельцев показываем только публичные списки -->
-    <div th:if="${!isOwner}">
-        <div th:if="${!publicLists.isEmpty()}">
-            <div th:each="list : ${publicLists}" class="card list-card">
-                <div class="list-card-body">
-                    <h3><a th:href="@{'/lists/' + ${list.id}}" th:text="${list.name}"></a></h3>
-                    <p class="list-card-desc" th:if="${list.description}" th:text="${list.description}"></p>
-                </div>
-            </div>
-        </div>
-        <div th:if="${publicLists.isEmpty()}" class="empty-state">
-            <i class="fas fa-list"></i>
-            <p>Публичных списков пока нет.</p>
-        </div>
+        <p th:text="${isOwner} ? 'У вас пока нет списков. Создайте первый!' : 'Публичных списков пока нет.'"></p>
     </div>
 
     <h2>Оценки</h2>
@@ -73,7 +77,9 @@
             <span class="rating-type-badge"
                   th:classappend="${r.itemType.name() == 'RESTAURANT'} ? 'badge-restaurant' : 'badge-dish'"
                   th:text="${r.itemType.name() == 'RESTAURANT'} ? 'Ресторан' : 'Блюдо'"></span>
-            <span class="rating-score-badge" th:text="${#numbers.formatDecimal(r.score, 1, 1)} + ' ★'"></span>
+            <span class="rating-score-badge" th:if="${r.score != null}"
+                  th:text="${#numbers.formatDecimal(r.score, 1, 1)} + ' ★'"></span>
+            <span class="rating-no-score" th:unless="${r.score != null}">без оценки</span>
         </div>
         <div class="rating-card-body">
             <strong>
@@ -86,6 +92,7 @@
                  class="rating-restaurant-link">
                 из <a th:href="@{'/restaurants/' + ${r.restaurantId}}" th:text="${r.restaurantName}"></a>
             </div>
+            <p class="rating-review-text" th:if="${!#strings.isEmpty(r.review)}" th:text="${r.review}"></p>
         </div>
     </div>
 </div>

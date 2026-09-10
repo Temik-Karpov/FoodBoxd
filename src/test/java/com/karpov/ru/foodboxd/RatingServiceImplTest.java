@@ -1,9 +1,13 @@
 package com.karpov.ru.foodboxd;
 
+import com.karpov.ru.foodboxd.dto.FeedItemDto;
 import com.karpov.ru.foodboxd.model.entity.Rating;
+import com.karpov.ru.foodboxd.model.entity.Restaurant;
 import com.karpov.ru.foodboxd.model.entity.User;
 import com.karpov.ru.foodboxd.model.enums.ItemType;
+import com.karpov.ru.foodboxd.repository.MenuItemRepository;
 import com.karpov.ru.foodboxd.repository.RatingRepository;
+import com.karpov.ru.foodboxd.repository.RestaurantRepository;
 import com.karpov.ru.foodboxd.repository.UserRepository;
 import com.karpov.ru.foodboxd.service.MenuItemService;
 import com.karpov.ru.foodboxd.service.RestaurantService;
@@ -16,6 +20,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.*;
@@ -36,6 +41,10 @@ class RatingServiceImplTest {
     private RestaurantService restaurantService;
     @Mock
     private MenuItemService menuItemService;
+    @Mock
+    private RestaurantRepository restaurantRepository;
+    @Mock
+    private MenuItemRepository menuItemRepository;
 
     @InjectMocks
     private RatingServiceImpl ratingService;
@@ -101,6 +110,15 @@ class RatingServiceImplTest {
     }
 
     @Test
+    void rateShouldThrowWhenScoreIsNull() {
+        assertThatThrownBy(() -> ratingService.rate(1L, ItemType.RESTAURANT, 1L, null, "текст отзыва"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Оценка обязательна");
+
+        verify(ratingRepository, never()).save(any());
+    }
+
+    @Test
     void getUserRatingForItemShouldReturnFromRepository() {
         Rating rating = new Rating();
         when(ratingRepository.findByUserIdAndRatedItemTypeAndRatedItemId(1L, ItemType.RESTAURANT, 5L))
@@ -117,5 +135,46 @@ class RatingServiceImplTest {
 
         Double avg = ratingService.getAverageRating(ItemType.MENU_ITEM, 99L);
         assertThat(avg).isNull();
+    }
+
+    @Test
+    void getFeedShouldReturnEmptyWhenNoUserIds() {
+        assertThat(ratingService.getFeed(List.of(), 10)).isEmpty();
+        verifyNoInteractions(ratingRepository);
+    }
+
+    @Test
+    void getFeedShouldMapRatingWithAuthorAndItem() {
+        user.setUsername("alice");
+        user.setEmail("alice@example.com");
+
+        Rating rating = Rating.builder()
+                .id(100L)
+                .user(user)
+                .ratedItemType(ItemType.RESTAURANT)
+                .ratedItemId(10L)
+                .score(new BigDecimal("4.5"))
+                .review("Отличное место")
+                .build();
+        when(ratingRepository.findRecentByUserIds(List.of(1L),
+                org.springframework.data.domain.PageRequest.of(0, 10)))
+                .thenReturn(List.of(rating));
+
+        Restaurant restaurant = new Restaurant();
+        restaurant.setId(10L);
+        restaurant.setName("Pizza House");
+        when(restaurantRepository.findById(10L)).thenReturn(Optional.of(restaurant));
+
+        List<FeedItemDto> feed = ratingService.getFeed(List.of(1L), 10);
+
+        assertThat(feed).hasSize(1);
+        FeedItemDto item = feed.get(0);
+        assertThat(item.getItemName()).isEqualTo("Pizza House");
+        assertThat(item.getItemLink()).isEqualTo("/restaurants/10");
+        assertThat(item.getReview()).isEqualTo("Отличное место");
+        assertThat(item.getScore()).isEqualByComparingTo("4.5");
+        assertThat(item.getAuthorId()).isEqualTo(1L);
+        assertThat(item.getAuthorUsername()).isEqualTo("alice");
+        assertThat(item.getAuthorEmail()).isEqualTo("alice@example.com");
     }
 }

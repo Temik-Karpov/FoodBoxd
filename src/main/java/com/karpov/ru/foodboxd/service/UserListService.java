@@ -54,6 +54,13 @@ public interface UserListService {
     List<UserList> getAllLists(Long ownerId);
 
     /**
+     * Считает публичные списки пользователя.
+     * @param ownerId идентификатор пользователя
+     * @return количество публичных списков
+     */
+    long countPublicLists(Long ownerId);
+
+    /**
      * Возвращает список по идентификатору с элементами.
      * @param listId идентификатор списка
      * @return список

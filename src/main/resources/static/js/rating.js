@@ -44,19 +44,22 @@ function submitRating(ratingBlock, opts = {}) {
     const reviewInput = ratingBlock.querySelector('.rating-review-input');
     const review = reviewInput ? reviewInput.value.trim() : '';
 
-    // Нечего отправлять: ни оценки, ни текста
-    if (score <= 0 && !review) return;
-
     const avgEl = ratingBlock.querySelector('.avg-rating-value');
     const statusEl = ratingBlock.querySelector('.review-composer-status');
     const btn = ratingBlock.querySelector('.review-submit-btn');
     const prevAvg = avgEl ? avgEl.textContent : '-';
 
+    // Оценка обязательна — без неё отзыв не отправляем
+    if (score <= 0) {
+        setStatus(statusEl, 'Поставьте оценку звёздами', 'error');
+        return;
+    }
+
     setStatus(statusEl, 'Отправка...', 'pending');
     if (btn) btn.disabled = true;
 
     const params = new URLSearchParams();
-    if (score > 0) params.append('score', score);
+    params.append('score', score);
     if (review) params.append('review', review);
 
     fetch(`/rate/${itemType}/${itemId}`, {
@@ -89,9 +92,9 @@ function submitRating(ratingBlock, opts = {}) {
             if (reviewInput) reviewInput.value = '';
 
             if (opts.viaButton) {
-                const message = score > 0
+                const message = review
                     ? 'Оценка и отзыв сохранены'
-                    : (review ? 'Отзыв отправлен' : 'Сохранено');
+                    : 'Оценка сохранена';
                 setStatus(statusEl, message, 'success');
                 setTimeout(() => setStatus(statusEl, '', 'idle'), 3500);
             }

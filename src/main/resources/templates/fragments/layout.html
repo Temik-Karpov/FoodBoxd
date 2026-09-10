@@ -28,7 +28,9 @@
     </a>
 
     <a th:href="@{/}" class="nav-link">Главная</a>
+    <a sec:authorize="isAuthenticated()" th:href="@{/feed}" class="nav-link">Лента</a>
     <a sec:authorize="isAuthenticated()" th:href="@{/lists}" class="nav-link">Списки</a>
+    <a sec:authorize="isAuthenticated()" th:href="@{/users}" class="nav-link">Пользователи</a>
 
     <div class="nav-spacer"></div>
 

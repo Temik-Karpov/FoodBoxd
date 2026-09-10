@@ -106,4 +106,16 @@ public class MenuItemServiceImpl implements MenuItemService {
                 .limit(limit)
                 .toList();
     }
+
+    @Override
+    public List<MenuItem> searchByRestaurant(Long restaurantId, String query, int limit) {
+        if (query == null || query.isBlank() || restaurantId == null) {
+            return List.of();
+        }
+        return menuItemRepository
+                .findByRestaurantIdAndIsAvailableTrueAndNameContainingIgnoreCase(restaurantId, query)
+                .stream()
+                .limit(limit)
+                .toList();
+    }
 }

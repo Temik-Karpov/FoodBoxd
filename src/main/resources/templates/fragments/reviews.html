@@ -9,10 +9,15 @@
         <div th:each="review : ${reviews}" class="review-item"
              th:attr="data-username=${review.user.username}">
             <div class="review-header">
-                <img th:src="${review.user.avatarUrl != null ? review.user.avatarUrl : '/images/default-avatar.png'}"
-                     alt="Аватар" class="review-avatar">
+                <a th:href="@{/profile/{email}(email=${review.user.email})}">
+                    <img th:src="${review.user.avatarUrl != null ? review.user.avatarUrl : '/images/default-avatar.png'}"
+                         alt="Аватар" class="review-avatar">
+                </a>
                 <div class="review-meta">
-                    <strong th:text="${review.user.username}"></strong>
+                    <strong>
+                        <a th:href="@{/profile/{email}(email=${review.user.email})}"
+                           th:text="${review.user.username}"></a>
+                    </strong>
                     <span class="review-score" th:if="${review.score != null}"><i class="fas fa-star"></i> <span th:text="${#numbers.formatDecimal(review.score, 1, 1)}"></span></span>
                     <span class="review-no-score" th:if="${review.score == null}">без оценки</span>
                     <span class="review-date" th:text="${#temporals.format(review.createdAt, 'dd.MM.yyyy HH:mm')}"></span>

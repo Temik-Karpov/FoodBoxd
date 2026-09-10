@@ -1,53 +1,180 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const searchInput = document.getElementById('search-input');
-    if (!searchInput) return;
+    const searchBlock = document.querySelector('.search-block');
+    const dishInput = document.getElementById('search-input');
+    const restaurantInput = document.getElementById('restaurant-search-input');
 
-    const searchResults = document.getElementById('search-results');
-    const listId = searchInput.dataset.listId;
+    if (!dishInput && !restaurantInput) return;
+
+    const listId = searchBlock
+        ? searchBlock.dataset.listId
+        : (dishInput ? dishInput.dataset.listId : null);
     const sortableList = document.getElementById('sortable-list');
 
-    let searchTimeout;
-    searchInput.addEventListener('input', function() {
-        clearTimeout(searchTimeout);
-        const query = this.value.trim();
-        if (query.length < 2) {
-            searchResults.innerHTML = '';
-            searchResults.classList.remove('open');
-            return;
-        }
-        searchTimeout = setTimeout(() => {
-            fetch(`/lists/${listId}/search?query=${encodeURIComponent(query)}`)
-                .then(r => r.json())
-                .then(data => {
-                    searchResults.innerHTML = '';
-                    if (data.length === 0) {
-                        searchResults.innerHTML = '<div class="search-result-item">Ничего не найдено</div>';
-                    } else {
-                        data.forEach(item => {
-                            const div = document.createElement('div');
-                            div.className = 'search-result-item';
-                            if (item.type === 'RESTAURANT') {
-                                div.innerHTML = `<strong>${escapeHtml(item.name)}</strong> <span class="muted">${escapeHtml(item.address)}</span>`;
-                            } else {
-                                div.innerHTML = `<strong>${escapeHtml(item.name)}</strong> <span class="muted">${escapeHtml(item.restaurantName)} — ${escapeHtml(item.price)} ₽</span>`;
-                            }
-                            div.addEventListener('click', function() {
-                                addToList(listId, item.id);
-                            });
-                            searchResults.appendChild(div);
-                        });
-                    }
-                    searchResults.classList.add('open');
-                })
-                .catch(err => console.error('Ошибка поиска:', err));
-        }, 300);
-    });
+    let selectedRestaurantId = null;
 
-    document.addEventListener('click', function(e) {
-        if (searchInput && !searchInput.contains(e.target) && searchResults && !searchResults.contains(e.target)) {
-            searchResults.classList.remove('open');
+    // ===== Шаг 1: выбор ресторана (только для списков блюд и напитков) =====
+    if (restaurantInput) {
+        const restaurantResults = document.getElementById('restaurant-search-results');
+        const restaurantWrap = document.getElementById('restaurant-search-wrap');
+        const selectedBox = document.getElementById('selected-restaurant');
+        const selectedName = selectedBox.querySelector('.selected-restaurant-name');
+        const dishBlock = document.getElementById('dish-search-block');
+        const storageKey = `list:${listId}:selectedRestaurant`;
+        let restaurantTimeout;
+
+        function applyRestaurant(id, name) {
+            selectedRestaurantId = id;
+            selectedName.textContent = name;
+            restaurantResults.classList.remove('open');
+            restaurantWrap.hidden = true;
+            selectedBox.hidden = false;
+            dishBlock.hidden = false;
         }
-    });
+
+        function saveRestaurant(id, name) {
+            try {
+                sessionStorage.setItem(storageKey, JSON.stringify({ id: id, name: name }));
+            } catch (e) {
+                // хранилище может быть недоступно (приватный режим) — не критично
+            }
+        }
+
+        function loadRestaurant() {
+            try {
+                const raw = sessionStorage.getItem(storageKey);
+                return raw ? JSON.parse(raw) : null;
+            } catch (e) {
+                return null;
+            }
+        }
+
+        function clearRestaurant() {
+            try {
+                sessionStorage.removeItem(storageKey);
+            } catch (e) {
+                // ignore
+            }
+        }
+
+        // Восстанавливаем ресторан после перезагрузки страницы, чтобы не выбирать его заново
+        const savedRestaurant = loadRestaurant();
+        if (savedRestaurant && savedRestaurant.id != null) {
+            applyRestaurant(savedRestaurant.id, savedRestaurant.name || '');
+        }
+
+        restaurantInput.addEventListener('input', function() {
+            clearTimeout(restaurantTimeout);
+            const query = this.value.trim();
+            if (query.length < 2) {
+                restaurantResults.innerHTML = '';
+                restaurantResults.classList.remove('open');
+                return;
+            }
+            restaurantTimeout = setTimeout(() => {
+                fetch(`/lists/${listId}/restaurants?query=${encodeURIComponent(query)}`)
+                    .then(r => r.json())
+                    .then(data => {
+                        restaurantResults.innerHTML = '';
+                        if (data.length === 0) {
+                            restaurantResults.innerHTML = '<div class="search-result-item">Ничего не найдено</div>';
+                        } else {
+                            data.forEach(item => {
+                                const div = document.createElement('div');
+                                div.className = 'search-result-item';
+                                div.innerHTML = `<strong>${escapeHtml(item.name)}</strong>` +
+                                    (item.address ? ` <span class="muted">${escapeHtml(item.address)}</span>` : '');
+                                div.addEventListener('click', () => selectRestaurant(item));
+                                restaurantResults.appendChild(div);
+                            });
+                        }
+                        restaurantResults.classList.add('open');
+                    })
+                    .catch(err => console.error('Ошибка поиска ресторанов:', err));
+            }, 300);
+        });
+
+        document.addEventListener('click', function(e) {
+            if (!restaurantWrap.contains(e.target) && !restaurantResults.contains(e.target)) {
+                restaurantResults.classList.remove('open');
+            }
+        });
+
+        document.getElementById('change-restaurant-btn').addEventListener('click', function() {
+            clearRestaurant();
+            selectedRestaurantId = null;
+            selectedBox.hidden = true;
+            dishBlock.hidden = true;
+            restaurantWrap.hidden = false;
+            restaurantInput.value = '';
+            if (dishInput) {
+                dishInput.value = '';
+                const results = document.getElementById('search-results');
+                if (results) {
+                    results.innerHTML = '';
+                    results.classList.remove('open');
+                }
+            }
+            restaurantInput.focus();
+        });
+
+        function selectRestaurant(item) {
+            applyRestaurant(item.id, item.name);
+            saveRestaurant(item.id, item.name);
+            if (dishInput) dishInput.focus();
+        }
+    }
+
+    // ===== Шаг 2: поиск блюд (или ресторанов — для списка заведений) =====
+    if (dishInput) {
+        const dishResults = document.getElementById('search-results');
+        let dishTimeout;
+
+        dishInput.addEventListener('input', function() {
+            clearTimeout(dishTimeout);
+            const query = this.value.trim();
+            if (query.length < 2) {
+                dishResults.innerHTML = '';
+                dishResults.classList.remove('open');
+                return;
+            }
+            dishTimeout = setTimeout(() => {
+                let url = `/lists/${listId}/search?query=${encodeURIComponent(query)}`;
+                if (restaurantInput && selectedRestaurantId != null) {
+                    url += `&restaurantId=${selectedRestaurantId}`;
+                }
+                fetch(url)
+                    .then(r => r.json())
+                    .then(data => {
+                        dishResults.innerHTML = '';
+                        if (data.length === 0) {
+                            dishResults.innerHTML = '<div class="search-result-item">Ничего не найдено</div>';
+                        } else {
+                            data.forEach(item => {
+                                const div = document.createElement('div');
+                                div.className = 'search-result-item';
+                                if (item.type === 'RESTAURANT') {
+                                    div.innerHTML = `<strong>${escapeHtml(item.name)}</strong> <span class="muted">${escapeHtml(item.address)}</span>`;
+                                } else {
+                                    div.innerHTML = `<strong>${escapeHtml(item.name)}</strong> <span class="muted">${escapeHtml(item.restaurantName)} — ${escapeHtml(item.price)} ₽</span>`;
+                                }
+                                div.addEventListener('click', function() {
+                                    addToList(listId, item.id);
+                                });
+                                dishResults.appendChild(div);
+                            });
+                        }
+                        dishResults.classList.add('open');
+                    })
+                    .catch(err => console.error('Ошибка поиска:', err));
+            }, 300);
+        });
+
+        document.addEventListener('click', function(e) {
+            if (!dishInput.contains(e.target) && dishResults && !dishResults.contains(e.target)) {
+                dishResults.classList.remove('open');
+            }
+        });
+    }
 
     function addToList(listId, itemId) {
         fetch(`/lists/${listId}/add?itemId=${itemId}`, { method: 'POST' })

@@ -1,5 +1,6 @@
 package com.karpov.ru.foodboxd.service;
 
+import com.karpov.ru.foodboxd.dto.FeedItemDto;
 import com.karpov.ru.foodboxd.dto.UserRatingDto;
 import com.karpov.ru.foodboxd.model.entity.Rating;
 import com.karpov.ru.foodboxd.model.enums.ItemType;
@@ -19,7 +20,7 @@ public interface RatingService {
      * @param userId   ID пользователя
      * @param itemType тип объекта
      * @param itemId   ID объекта
-     * @param score    оценка (0.5 – 5.0)
+     * @param score    оценка (0.5 – 5.0), обязательна
      * @param review   текстовый отзыв (опционально)
      * @return сохранённая оценка
      */
@@ -59,6 +60,15 @@ public interface RatingService {
      * @return список DTO с названиями
      */
     List<UserRatingDto> getUserRatingsWithNames(Long userId);
+
+    /**
+     * Возвращает последние оценки и комментарии указанных пользователей для ленты.
+     *
+     * @param userIds ID пользователей
+     * @param limit   максимальное количество записей
+     * @return список элементов ленты
+     */
+    List<FeedItemDto> getFeed(List<Long> userIds, int limit);
 
     /**
      * Возвращает последние комментарии для объекта.

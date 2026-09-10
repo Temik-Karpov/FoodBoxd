@@ -14,16 +14,53 @@
                   th:classappend="${list.isPublic} ? 'badge-public' : 'badge-private'"></span>
             <span th:text="'Тип: ' + (${list.itemType == T(com.karpov.ru.foodboxd.model.enums.ItemType).RESTAURANT} ? 'Заведения' : 'Блюда и напитки')"></span>
         </div>
+        <p class="list-owner" th:if="${list.owner != null}">
+            Автор:
+            <a th:href="@{/profile/{email}(email=${list.owner.email})}" th:text="${list.owner.username}"></a>
+        </p>
     </div>
 
     <!-- Поиск -->
-    <div class="card search-block">
+    <div class="card search-block" th:if="${isOwner}"
+         th:with="isMenu=${list.itemType == T(com.karpov.ru.foodboxd.model.enums.ItemType).MENU_ITEM}"
+         th:attr="data-list-id=${list.id}">
         <h3>Добавить элемент</h3>
-        <div class="search-input-wrap">
-            <input type="text" id="search-input"
-                   th:attr="data-list-id=${list.id}"
-                   th:placeholder="${list.itemType == T(com.karpov.ru.foodboxd.model.enums.ItemType).RESTAURANT} ? 'Поиск ресторанов...' : 'Поиск блюд и напитков...'">
-            <div id="search-results" class="search-results"></div>
+
+        <!-- Списки блюд и напитков: сначала выбираем ресторан -->
+        <div class="restaurant-picker" th:if="${isMenu}">
+            <label class="search-label" for="restaurant-search-input">Шаг 1. Найдите ресторан</label>
+            <div class="search-input-wrap" id="restaurant-search-wrap">
+                <input type="text" id="restaurant-search-input"
+                       placeholder="Название ресторана...">
+                <div id="restaurant-search-results" class="search-results"></div>
+            </div>
+            <div id="selected-restaurant" class="selected-restaurant" hidden>
+                <span class="selected-restaurant-label">Ресторан:</span>
+                <span class="selected-restaurant-name"></span>
+                <button type="button" id="change-restaurant-btn"
+                        class="btn btn-sm btn-secondary">Изменить</button>
+            </div>
+        </div>
+
+        <!-- Шаг 2: поиск блюда внутри выбранного ресторана -->
+        <div class="item-search" id="dish-search-block" th:if="${isMenu}" hidden>
+            <label class="search-label" for="search-input">Шаг 2. Найдите блюдо или напиток</label>
+            <div class="search-input-wrap">
+                <input type="text" id="search-input"
+                       th:attr="data-list-id=${list.id}"
+                       placeholder="Название блюда или напитка...">
+                <div id="search-results" class="search-results"></div>
+            </div>
+        </div>
+
+        <!-- Списки заведений: поиск ресторанов в один шаг -->
+        <div class="item-search" th:unless="${isMenu}">
+            <div class="search-input-wrap">
+                <input type="text" id="search-input"
+                       th:attr="data-list-id=${list.id}"
+                       placeholder="Поиск ресторанов...">
+                <div id="search-results" class="search-results"></div>
+            </div>
         </div>
     </div>
 
@@ -38,7 +75,7 @@
          th:if="${enrichedItems != null && !enrichedItems.isEmpty()}">
         <div th:each="item, iter : ${enrichedItems}" class="card sortable-item"
              th:attr="data-item-id=${item.get('listItemId')}">
-            <div class="drag-handle">☰</div>
+            <div class="drag-handle" th:if="${isOwner}">☰</div>
             <div class="sortable-item-body">
                 <div class="sortable-item-title">
                     <a th:href="${item.get('link')}" th:text="${item.get('name')}"></a>
@@ -58,6 +95,7 @@
                 </div>
             </div>
             <button class="btn btn-sm btn-secondary remove-item-btn"
+                    th:if="${isOwner}"
                     th:attr="data-list-id=${list.id}, data-item-id=${item.get('listItemId')}">
                 ✕
             </button>

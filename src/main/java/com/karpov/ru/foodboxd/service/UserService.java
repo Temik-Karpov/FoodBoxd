@@ -4,6 +4,7 @@ import com.karpov.ru.foodboxd.dto.UserProfileDto;
 import com.karpov.ru.foodboxd.dto.UserRegistrationDto;
 import com.karpov.ru.foodboxd.model.entity.User;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -38,6 +39,19 @@ public interface UserService {
      * @return Optional пользователя
      */
     Optional<User> getUserById(Long id);
+
+    /**
+     * Возвращает всех пользователей, отсортированных по имени.
+     * @return список пользователей
+     */
+    List<User> getAllUsers();
+
+    /**
+     * Ищет пользователей по имени или городу. Пустой запрос возвращает всех.
+     * @param query поисковый запрос
+     * @return найденные пользователи
+     */
+    List<User> searchUsers(String query);
 
     /**
      * Обновляет профиль пользователя.

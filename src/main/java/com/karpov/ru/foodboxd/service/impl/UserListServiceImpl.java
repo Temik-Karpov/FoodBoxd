@@ -80,6 +80,11 @@ public class UserListServiceImpl implements UserListService {
     }
 
     @Override
+    public long countPublicLists(Long ownerId) {
+        return userListRepository.countByOwnerIdAndIsPublicTrue(ownerId);
+    }
+
+    @Override
     public UserList getListById(Long id) {
         return userListRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Список с ID " + id + " не найден"));

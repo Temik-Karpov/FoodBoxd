@@ -1,5 +1,6 @@
 package com.karpov.ru.foodboxd.service.impl;
 
+import com.karpov.ru.foodboxd.dto.FeedItemDto;
 import com.karpov.ru.foodboxd.dto.UserRatingDto;
 import com.karpov.ru.foodboxd.model.entity.MenuItem;
 import com.karpov.ru.foodboxd.model.entity.Rating;
@@ -41,12 +42,15 @@ public class RatingServiceImpl implements RatingService {
     @Override
     @Transactional
     public Rating rate(Long userId, ItemType itemType, Long itemId, BigDecimal score, String review) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("Пользователь не найден"));
-
-        if (score != null && (score.compareTo(BigDecimal.valueOf(0.5)) < 0 || score.compareTo(BigDecimal.valueOf(5.0)) > 0)) {
+        if (score == null) {
+            throw new IllegalArgumentException("Оценка обязательна");
+        }
+        if (score.compareTo(BigDecimal.valueOf(0.5)) < 0 || score.compareTo(BigDecimal.valueOf(5.0)) > 0) {
             throw new IllegalArgumentException("Оценка должна быть от 0.5 до 5.0");
         }
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("Пользователь не найден"));
 
         Rating rating = ratingRepository
                 .findByUserIdAndRatedItemTypeAndRatedItemId(userId, itemType, itemId)
@@ -56,9 +60,7 @@ public class RatingServiceImpl implements RatingService {
                         .ratedItemId(itemId)
                         .build());
 
-        if (score != null) {
-            rating.setScore(score);
-        }
+        rating.setScore(score);
         rating.setReview(review);
         Rating saved = ratingRepository.save(rating);
 
@@ -130,6 +132,62 @@ public class RatingServiceImpl implements RatingService {
                     r.getReview(),
                     restaurantName,
                     restaurantId
+            ));
+        }
+        return result;
+    }
+
+    @Override
+    public List<FeedItemDto> getFeed(List<Long> userIds, int limit) {
+        if (userIds == null || userIds.isEmpty()) {
+            return List.of();
+        }
+
+        List<Rating> ratings = ratingRepository.findRecentByUserIds(userIds, PageRequest.of(0, limit));
+        List<FeedItemDto> result = new ArrayList<>();
+
+        for (Rating r : ratings) {
+            String itemName = "";
+            String itemLink = null;
+            String restaurantName = null;
+            String restaurantLink = null;
+
+            if (r.getRatedItemType() == ItemType.RESTAURANT) {
+                Restaurant restaurant = restaurantRepository.findById(r.getRatedItemId()).orElse(null);
+                if (restaurant != null) {
+                    itemName = restaurant.getName();
+                    itemLink = "/restaurants/" + restaurant.getId();
+                } else {
+                    itemName = "Удалённый ресторан";
+                }
+            } else if (r.getRatedItemType() == ItemType.MENU_ITEM) {
+                MenuItem menuItem = menuItemRepository.findById(r.getRatedItemId()).orElse(null);
+                if (menuItem != null) {
+                    itemName = menuItem.getName();
+                    itemLink = "/menu-item/" + menuItem.getId();
+                    restaurantName = menuItem.getRestaurant().getName();
+                    restaurantLink = "/restaurants/" + menuItem.getRestaurant().getId();
+                } else {
+                    itemName = "Удалённое блюдо";
+                }
+            }
+
+            User author = r.getUser();
+            result.add(new FeedItemDto(
+                    r.getId(),
+                    r.getCreatedAt(),
+                    r.getRatedItemType(),
+                    r.getRatedItemId(),
+                    itemName,
+                    itemLink,
+                    restaurantName,
+                    restaurantLink,
+                    r.getScore(),
+                    r.getReview(),
+                    author.getId(),
+                    author.getUsername(),
+                    author.getEmail(),
+                    author.getAvatarUrl()
             ));
         }
         return result;

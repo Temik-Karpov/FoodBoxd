@@ -15,6 +15,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.*;
@@ -107,5 +108,39 @@ class UserServiceImplTest {
     void findByEmailShouldReturnEmptyWhenNotFound() {
         when(userRepository.findByEmail("nonexistent@example.com")).thenReturn(Optional.empty());
         assertThat(userService.findByEmail("nonexistent@example.com")).isEmpty();
+    }
+
+    @Test
+    void getAllUsersShouldReturnUsersFromRepository() {
+        User first = new User();
+        first.setUsername("alice");
+        User second = new User();
+        second.setUsername("bob");
+        when(userRepository.findAllByOrderByUsernameAsc()).thenReturn(List.of(first, second));
+
+        List<User> result = userService.getAllUsers();
+
+        assertThat(result).containsExactly(first, second);
+    }
+
+    @Test
+    void searchUsersShouldReturnAllWhenQueryIsBlank() {
+        User user = new User();
+        user.setUsername("alice");
+        when(userRepository.findAllByOrderByUsernameAsc()).thenReturn(List.of(user));
+
+        assertThat(userService.searchUsers("   ")).containsExactly(user);
+        verify(userRepository, never())
+                .findByUsernameContainingIgnoreCaseOrCityContainingIgnoreCaseOrderByUsernameAsc(any(), any());
+    }
+
+    @Test
+    void searchUsersShouldTrimAndDelegateToRepository() {
+        User user = new User();
+        user.setUsername("alice");
+        when(userRepository.findByUsernameContainingIgnoreCaseOrCityContainingIgnoreCaseOrderByUsernameAsc("ali", "ali"))
+                .thenReturn(List.of(user));
+
+        assertThat(userService.searchUsers("  ali  ")).containsExactly(user);
     }
 }

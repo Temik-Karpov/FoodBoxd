@@ -3,6 +3,7 @@ package com.karpov.ru.foodboxd.repository;
 import com.karpov.ru.foodboxd.model.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -39,4 +40,18 @@ public interface UserRepository extends JpaRepository<User, Long> {
     boolean existsByUsername(String username);
 
     Optional<User> findByResetToken(String resetToken);
+
+    /**
+     * Возвращает всех пользователей, отсортированных по имени.
+     * @return список пользователей
+     */
+    List<User> findAllByOrderByUsernameAsc();
+
+    /**
+     * Ищет пользователей по имени или городу без учёта регистра.
+     * @param username часть имени пользователя
+     * @param city часть названия города
+     * @return найденные пользователи
+     */
+    List<User> findByUsernameContainingIgnoreCaseOrCityContainingIgnoreCaseOrderByUsernameAsc(String username, String city);
 }
